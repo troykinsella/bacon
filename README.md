@@ -84,7 +84,8 @@ This feature is experimental, and may have buggy behaviour on some systems.
 ### My file changes aren't being noticed
 
 Are you watching more files than your operating system can support?
-As the default include glob is `$GOPATH/src/**/*.go`
+As the default include glob is `$GOPATH/src/**/*.go`, every Go
+package you've `go get`'ed is being watched unless you trim it down.
 
 Use the `-d` option to show effective file matches. Adjust your include (`-w`), 
 and/or exclude (`-e`) options as necessary to reduce the match count.
