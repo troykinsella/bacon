@@ -99,3 +99,4 @@ and/or exclude (`-e`) options as necessary to reduce the match count.
 ## License
 
 MIT © Troy Kinsella
+
