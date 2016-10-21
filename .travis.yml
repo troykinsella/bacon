@@ -2,6 +2,7 @@ language: go
 go:
 - tip
 install:
+- go get github.com/mitchellh/gox
 - go get -d -v ./...
 script:
 - go test -v ./...
