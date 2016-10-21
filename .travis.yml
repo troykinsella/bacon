@@ -14,13 +14,12 @@ deploy:
   api_key:
     secure: NQ2ZPCqN+txANOi/chjFsbdqbjMWZfNrBPd2jtRL7qEeI56JbyDQ/DwieL+Ssvw9uTSX3c91D84I+VyPecBwU8Nhr0/DTtlNSV4PVyjO5X1ap9YaRVIXF3E7Frm7hs/e0rnOgGpfJ2brCC1xQhrI//Mj8mNwlWDZqd4nkCBv5V2yfuxlFIApggooBDVYv683c6lHQj4xY8LwFU34B/IH5UOccXXGskh9anFEYZl1RqLO3pm5sC5gj77l4MtRxllX9f41xUSkv6W8cXFWLAe0v+0q/ZN4EVMA2aCkM7ca2Tp13HDYmhr9KY2pUG8MrIHrd5bgjNyQ0Dqn9uUitq9h981xcYM9TjQx0uzL9fGgNzSyJ9UXnKcJueE8+vG06eKiEheuT3WyACKO9+XgSCuxCoOK4IpXTJ+TLDp6al+IF59d/ViROfMWZcHKmHxOdBPW5tJ/18UwS9gPyAYjyCwgRxNzjNIPoXHYUeiMku4k/cBOHZBTW1Rdi5wjE66P+4E8NvgaNB5in1++e/gTLxuAyA0Zr1H0c4c9AZlkvf7f0debL0Crnj1z+NH4LyoLD114+HbRm1hCTvts5lOC2b+bhcs43Yah1dcxYPN/CVzOiPU6lyQyvLVJ0Bm2OLIFH/39Wt/r43ObGe84CXQTLnstpPRwQPBLNxr43KsyOwOQAes=
   file:
-      - autotest_darwin_amd64
-      - autotest_linux_amd64
-      - autotest_windows_amd64.exe
-      - sha256sum.txt
-    skip_cleanup: true
+    - autotest_darwin_amd64
+    - autotest_linux_amd64
+    - autotest_windows_amd64.exe
+    - sha256sum.txt
+  skip_cleanup: true
   on:
     repo: troykinsella/autotest
     tags: true
     go: tip
-
