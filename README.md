@@ -65,6 +65,10 @@ In order to not spam you with notifications for every watched file change,
 * Tests were failing, but are now passing
 * Tests were passing, but are now failing
 
+Notifications look like this:
+
+![Tests Recovered](https://troykinsella.github.io/autotest/notify_recover.png)
+
 System notifications are supported by [0xAX/notificator](https://github.com/0xAX/notificator).
 Refer to this documentation to see if notifications are supported on your operating system.
 Notifications are always enabled in `autotest`, but if they fail, it's silent.
