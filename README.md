@@ -14,6 +14,16 @@ From your `GOPATH`:
 go get github.com/troykinsella/autotest
 ```
 
+Or, checkout [releases](https://github.com/troykinsella/autotest/releases) and download the appropriate binary for your system.
+
+Or, run these commands:
+```bash
+VERSION=0.0.1
+OS=linux # or darwin, or windows
+curl -SsL -o $GOPATH/bin/autotest https://github.com/troykinsella/autotest/releases/download/v${VERSION}/autotest_${OS}_amd64
+chmod +x $GOPATH/bin/autotest
+```
+
 ## Usage
 
 Running `autotest` will watch your Go source files, run tests when they've changed.
