@@ -7,14 +7,6 @@
 A tool to watch a Go lang workspace for source file changes and automatically
 run tests with `go test`.
 
-`autotest` continuously prints `go test` output, as well as:
-
-* An easily readable pass/fail summary line
-* Generates a system notification when tests begin to fail, and when they've recovered
-
-System notifications are supported by [0xAX/notificator](https://github.com/0xAX/notificator).
-Refer to this documentation to see if notifications are supported on your operating system.
-
 ## Installation
 
 From your `GOPATH`:
@@ -23,6 +15,8 @@ go get github.com/troykinsella/autotest
 ```
 
 ## Usage
+
+Running `autotest` will watch your Go source files, run tests when they've changed.
 
 `autotest` can be executed from any directory with the same effect,
 since it operates against `$GOPATH`.
@@ -38,6 +32,42 @@ Since the `-a` value is passed verbatim to `go test`, you can include any suppor
 ```bash
 autotest -a "-v -cover github.com/you/project/..."
 ```
+
+### Output
+
+`autotest` continuously prints `go test` output, as well as:
+
+* An easily readable pass/fail summary line
+* Generates a system notification when tests begin to fail, and when they've recovered
+
+#### Test Summary Line
+
+Since it takes more than a single glance to figure out from the `go test` output if tests 
+have passed, `autotest` prints a summary line after test runs.
+
+Pass looks like this:
+```
+[19:31:42] ✓ Tests passed
+```
+The timestamp format is `[h:m:s]`.
+
+Failures look like this:
+```
+[19:37:13] ✗ Tests failed
+```
+
+#### Test Status Notifications
+
+In order to not spam you with notifications for every watched file change,
+`autotest` will only notify you when:
+
+* Test pass or fail for the first time
+* Tests were failing, but are now passing
+* Tests were passing, but are now failing
+
+System notifications are supported by [0xAX/notificator](https://github.com/0xAX/notificator).
+Refer to this documentation to see if notifications are supported on your operating system.
+Notifications are always enabled in `autotest`, but if they fail, it's silent.
 
 ### Watch Targets
 
