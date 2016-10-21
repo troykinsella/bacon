@@ -7,19 +7,20 @@ install:
 script:
 - go test -v ./...
 before_deploy:
-- ./.build.sh
+- "./.build.sh"
 - sha256sum autotest_* > sha256sum.txt
 deploy:
   provider: releases
   api_key:
-    secure: KfouJ7pP5hKnTHe3swVQ7Np4bbEcPLVga2P1CUzNQjH0yotm3kpCets6zQG8+ounKWPyxF+Ez+KSG/s1Do+anqw5p5z0nfK3942KrPprXMMdSTw1jIDts5+jDtyslRVqMdFYSKNClVVc8Xpr/cUop0c7qBa3lZExgdXBb3Jp4F7MjPPCRR4WUBn3GINrVookPqujr9cq9pjfd0kqLisltP0ScQG7cW5A1tn4ldzyw9mLlH1h4EXAYwIYUbrjg5f94p4QSFXiZxjIe700y2zsCk9HZn2fBxWbnxv0HwfqpP05eV95VOjdeelSjGU9u67oJJ+HvfELv0xFRegr/b77yQn4Qi08nzUzOWeVeBmSc2Zixm41+oVCcMtpaEN0Gd6bYBSuy1hN1g1x5KrBSMq6i766S+Y7GbmjJv2GQRDIWb0WvJ36mpkPZmUVDWxiodM0Htof4YbpajlmiuLxYsvY5ARq5fF3PVWi4Iy1GYNxp+Ozzqr0fT1FFjwXoXwXLJcgyHxZ8Kn+eXHphu/IRtWWIHgPEzAtOTDdzx6oj+S3+uEbYTpudsGkM/tgj1ruRJ8KU4hAaMSH4R0F2mFiMi4zVWkw+JkM6NTRLr6fuxUolCZpwMS4IbHecsjGY1R3jlVjjvZssj98du84/JY0d7e7BUJTqz3iflgUA7Zmanou3Nc=
+    secure: NQ2ZPCqN+txANOi/chjFsbdqbjMWZfNrBPd2jtRL7qEeI56JbyDQ/DwieL+Ssvw9uTSX3c91D84I+VyPecBwU8Nhr0/DTtlNSV4PVyjO5X1ap9YaRVIXF3E7Frm7hs/e0rnOgGpfJ2brCC1xQhrI//Mj8mNwlWDZqd4nkCBv5V2yfuxlFIApggooBDVYv683c6lHQj4xY8LwFU34B/IH5UOccXXGskh9anFEYZl1RqLO3pm5sC5gj77l4MtRxllX9f41xUSkv6W8cXFWLAe0v+0q/ZN4EVMA2aCkM7ca2Tp13HDYmhr9KY2pUG8MrIHrd5bgjNyQ0Dqn9uUitq9h981xcYM9TjQx0uzL9fGgNzSyJ9UXnKcJueE8+vG06eKiEheuT3WyACKO9+XgSCuxCoOK4IpXTJ+TLDp6al+IF59d/ViROfMWZcHKmHxOdBPW5tJ/18UwS9gPyAYjyCwgRxNzjNIPoXHYUeiMku4k/cBOHZBTW1Rdi5wjE66P+4E8NvgaNB5in1++e/gTLxuAyA0Zr1H0c4c9AZlkvf7f0debL0Crnj1z+NH4LyoLD114+HbRm1hCTvts5lOC2b+bhcs43Yah1dcxYPN/CVzOiPU6lyQyvLVJ0Bm2OLIFH/39Wt/r43ObGe84CXQTLnstpPRwQPBLNxr43KsyOwOQAes=
   file:
-    - autotest_darwin_amd64
-    - autotest_linux_amd64
-    - autotest_windows_amd64.exe
-    - sha256sum.txt
-  skip_cleanup: true
+      - autotest_darwin_amd64
+      - autotest_linux_amd64
+      - autotest_windows_amd64.exe
+      - sha256sum.txt
+    skip_cleanup: true
   on:
     repo: troykinsella/autotest
     tags: true
     go: tip
+
