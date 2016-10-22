@@ -138,7 +138,7 @@ and/or exclude (`-e`) options as necessary to reduce the match count.
 * Tests
 * Optionally throttle command runs down to once per a configurable time duration
 
-## Comparison to Similar Tools
+## Similar Tools
 
 If `bacon` doesn't suit your need, maybe the excellent [Tonkpils/snag](https://github.com/Tonkpils/snag) will.
 
