@@ -121,8 +121,8 @@ bacon -w "github.com/you/project/**" \
 Pass one ore more alternate exclude globs with the `-e` option:
 ```bash
 bacon -w "github.com/you/project/**" \
-       -e "github.com/you/project/no-watchee/**" \
-       -c "go test github.com/you/project/..."
+      -e "github.com/you/project/no-watchee/**" \
+      -c "go test github.com/you/project/..."
 ```
 
 ## Troubleshooting
