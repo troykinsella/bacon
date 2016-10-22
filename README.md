@@ -4,8 +4,7 @@
 [![License](https://img.shields.io/github/license/troykinsella/autotest.svg)](https://github.com/troykinsella/autotest/blob/master/LICENSE)
 [![Build Status](https://travis-ci.org/troykinsella/autotest.svg?branch=master)](https://travis-ci.org/troykinsella/autotest)
 
-A tool to watch a Go lang workspace for source file changes and automatically
-run tests with `go test`.
+A tool to watch files for changes and react by running commands. 
 
 ## Installation
 
@@ -26,58 +25,66 @@ chmod +x $GOPATH/bin/autotest
 
 ## Usage
 
-Running `autotest` will watch your Go source files, run tests when they've changed.
+Running `autotest` will watch your files, run commands when they've changed.
 
-`autotest` can be executed from any directory with the same effect,
-since it operates against `$GOPATH`.
+Run `autotest -h` for comprehensive command usage.
 
-### Test Arguments
+### Commands
 
-Run `autotest` by passing the arguments you'd normally pass to `go test` with the `-a` option:
+`autotest` runs the commands that you pass with the `-c` option:
 ```bash
-autotest -a github.com/you/project/...
+autotest -c "go test github.com/you/project/..." -c "echo holy shit that's wicked"
 ```
 
-Since the `-a` value is passed verbatim to `go test`, you can include any supported options. For example:
+### Passing Commands
+
+Commands supplied with the `-p` option are executed only when all commands pass.
 ```bash
-autotest -a "-v -cover github.com/you/project/..."
+autotest -c "go test github.com/you/project/..." -p "echo haw yeah"
+```
+
+### Failing Commands
+
+Commands passed with the `-f` option are executed when a command fails.
+```bash
+autotest -c "go test github.com/you/project/..." -f ./sendEmailToMicrosoft.sh
 ```
 
 ### Output
 
-`autotest` continuously prints `go test` output, as well as:
+`autotest` continuously prints command output, as well as:
 
 * An easily readable pass/fail summary line
-* Generates a system notification when tests begin to fail, and when they've recovered
+* Generates a system notification when commands begin to fail, and when they've recovered
 
-#### Test Summary Line
+#### Command Summary Line
 
-Since it takes more than a single glance to figure out from the `go test` output if tests 
-have passed, `autotest` prints a summary line after test runs.
+Since it takes more than a single glance to figure out from the command output if 
+they've passed, `autotest` prints an ansii-coloured summary line after command executions.
 
 Pass looks like this:
 ```
-[19:31:42] ✓ Tests passed
+[19:31:42] ✓ Passed
 ```
 The timestamp format is `[h:m:s]`.
 
 Failures look like this:
 ```
-[19:37:13] ✗ Tests failed
+[19:37:13] ✗ Failed
 ```
 
-#### Test Status Notifications
+#### Status Notifications
 
 In order to not spam you with notifications for every watched file change,
 `autotest` will only notify you when:
 
-* Test pass or fail for the first time
-* Tests were failing, but are now passing
-* Tests were passing, but are now failing
+* Commands pass or fail for the first time
+* Commands were failing, but are now passing
+* Commands were passing, but are now failing
 
 Notifications look like this:
 
-![Tests Recovered](https://troykinsella.github.io/autotest/notify_recover.png)
+![Commands Recovered](https://troykinsella.github.io/autotest/notify_recover.png)
 
 System notifications are supported by [0xAX/notificator](https://github.com/0xAX/notificator).
 Refer to this documentation to see if notifications are supported on your operating system.
@@ -91,7 +98,7 @@ means: when a file is written to; creation and deletion changes are ignored.
 Paths are selected for watching using extended glob syntax (support for **). 
 See the [bmatcuk/doublestar](https://github.com/bmatcuk/doublestar) documentation for glob syntax.
 `autotest` does not follow symlinks in resolving matches. Globs that do not start with `/` are
-considered relative to `$GOPATH/src`.
+considered relative to the CWD.
 
 A list of include globs and a list of exclude globs can be passed into `autotest` to tell it what to watch.
 First, the list of includes is expanded, then the result is passed through the excludes list to arrive
@@ -101,7 +108,7 @@ Use the `-d` (debug) option to print the effective watch list.
 
 #### Includes 
 
-By default, `autotest` includes `**/*.go`, which translates into "every go source file below $GOHOME/src".
+By default, `autotest` includes `**/*`, which translates into "every below the CWD".
 Supply one or more alternate include globs with the `-w` (watch) option:
 ```bash
 autotest -w "github.com/you/project/**" \
@@ -118,29 +125,23 @@ autotest -w "github.com/you/project/**" \
          -c github.com/you/project/...
 ```
 
-### Automatic Style Formatting (Experimental)
-
-Pass the `-f` option to enable formatting changed `*.go` files with `go fmt` prior to running tests.
-This feature is experimental, and may have buggy behaviour on some systems.
-
 ## Troubleshooting
 
 ### My file changes aren't being noticed
 
-Are you watching more files than your operating system can support?
-As the default include glob is `$GOPATH/src/**/*.go`, every Go
-package you've `go get`'ed is being watched unless you trim it down.
-
-Use the `-d` option to show effective file matches. Adjust your include (`-w`), 
+Are you watching more files than your operating system can support? Use 
+the `-d` option to show effective file matches. Adjust your include (`-w`), 
 and/or exclude (`-e`) options as necessary to reduce the match count.
 
 ## Road Map
 
 * Tests
 * Optionally throttle test runs down to once per a configurable time duration
-* Run a custom command upon test success or failure
+
+## Comparison to Similar Tools
+
+If `autotest` doesn't suit your need, maybe the excellent [Tonkpils/snag](https://github.com/Tonkpils/snag) will.
 
 ## License
 
 MIT © Troy Kinsella
-

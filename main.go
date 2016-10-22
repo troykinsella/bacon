@@ -7,36 +7,54 @@ import (
 )
 
 const (
-	version = "0.0.1"
+	version = "0.0.2"
 
-	arguments    = "a"
-	debug        = "d"
-	watch        = "w"
-	watchExclude = "e"
-	noTestOutput = "n"
-	format       = "f"
+	command          = "c"
+	commandLong      = command + ", cmd"
+	passCommand      = "p"
+	passCommandLong  = passCommand + ", pass"
+	failCommand      = "f"
+	failCommandLong  = failCommand + ", fail"
+	debug            = "d"
+	debugLong        = debug + ", debug"
+	watch            = "w"
+	watchLong        = watch + ", watch"
+	watchExclude     = "e"
+	watchExcludeLong = watchExclude + ", exclude"
+	showOutput       = "o"
+	showOutputLong   = showOutput + ", show-output"
+	noNotify         = "no-notify"
 )
 
 func newOptions(c *cli.Context) (*Options, error) {
-	args := c.String(arguments)
-	if args == "" {
-		return nil, cli.NewExitError("-"+arguments+" option required", 1)
+	cmds := c.StringSlice(command)
+	if cmds == nil || len(cmds) == 0 {
+		return nil, cli.NewExitError(command+" option required", 1)
 	}
 
+	passCmds := c.StringSlice(passCommand)
+	failCmds := c.StringSlice(failCommand)
 	includes := c.StringSlice(watch)
 	excludes := c.StringSlice(watchExclude)
-	noTO := c.Bool(noTestOutput)
-	f := c.Bool(format)
-	d := c.Bool(debug)
+	showOut := c.Bool(showOutput)
+	noNotify := c.Bool(noNotify)
+	dbg := c.Bool(debug)
 
-	return NewOptions(args, includes, excludes, !noTO, f, d)
+	return NewOptions(cmds,
+		passCmds,
+		failCmds,
+		includes,
+		excludes,
+		showOut,
+		!noNotify,
+		dbg)
 }
 
 func newCliApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "autotest"
 	app.Version = version
-	app.Usage = "Watch go source files and run tests upon changes"
+	app.Usage = "Watch files and run commands upon changes"
 	app.Author = "Troy Kinsella"
 	app.Action = func(c *cli.Context) error {
 		opts, err := newOptions(c)
@@ -45,33 +63,41 @@ func newCliApp() *cli.App {
 		}
 
 		at := NewAutoTest(opts)
-		err = at.Watch()
+		err = at.Run()
 		return err
 	}
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  arguments,
-			Usage: "go test `ARGS`. Required. Arguments are passed verbatim to 'go test' executions.",
+		cli.StringSliceFlag{
+			Name:  commandLong,
+			Usage: "Shell `CMD` to execute. Required. Can be repeated.",
+		},
+		cli.StringSliceFlag{
+			Name:  passCommandLong,
+			Usage: "Run the `CMD` when tests pass. Can be repeated.",
+		},
+		cli.StringSliceFlag{
+			Name:  failCommandLong,
+			Usage: "Run the `CMD` when tests fail. Can be repeated.",
 		},
 		cli.BoolFlag{
-			Name:  debug,
+			Name:  debugLong,
 			Usage: "Enable " + app.Name + " debug output.",
 		},
 		cli.StringSliceFlag{
-			Name:  watch,
-			Usage: "Watch the path `GLOB`. Can be repeated. Defaults to '$GOPATH/src/**/*.go'.",
+			Name:  watchLong,
+			Usage: "Watch the path `GLOB`. Can be repeated. Defaults to './**/*'.",
 		},
 		cli.StringSliceFlag{
-			Name:  watchExclude,
-			Usage: "Exclude path `GLOB` matches from being watched. Can be repeated. Defaults to '**/.git/**'.",
+			Name:  watchExcludeLong,
+			Usage: "Exclude path `GLOB` matches from being watched. Can be repeated. Defaults to '**/.git'.",
 		},
 		cli.BoolFlag{
-			Name:  noTestOutput,
-			Usage: "No test output; only print summary messages.",
+			Name:  showOutputLong,
+			Usage: "Enable command output.",
 		},
 		cli.BoolFlag{
-			Name:  format,
-			Usage: "Format a changed *.go file with 'go fmt' before executing tests.",
+			Name: noNotify,
+			Usage: "Disable system notifications.",
 		},
 	}
 
