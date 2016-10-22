@@ -17,7 +17,7 @@ Or, checkout [releases](https://github.com/troykinsella/bacon/releases) and down
 
 Or, run these commands:
 ```bash
-VERSION=0.0.1
+VERSION=0.0.2
 OS=linux # or darwin, or windows
 curl -SsL -o /usr/local/bin/bacon https://github.com/troykinsella/bacon/releases/download/v${VERSION}/bacon_${OS}_amd64
 chmod +x /usr/local/bin/bacon
