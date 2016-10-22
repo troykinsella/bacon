@@ -136,7 +136,7 @@ and/or exclude (`-e`) options as necessary to reduce the match count.
 ## Road Map
 
 * Tests
-* Optionally throttle test runs down to once per a configurable time duration
+* Optionally throttle command runs down to once per a configurable time duration
 
 ## Comparison to Similar Tools
 
