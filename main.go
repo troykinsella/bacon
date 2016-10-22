@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	appName = "bacon"
 	version = "0.0.2"
 
 	command          = "c"
@@ -52,7 +53,7 @@ func newOptions(c *cli.Context) (*Options, error) {
 
 func newCliApp() *cli.App {
 	app := cli.NewApp()
-	app.Name = "autotest"
+	app.Name = appName
 	app.Version = version
 	app.Usage = "Watch files and run commands upon changes"
 	app.Author = "Troy Kinsella"

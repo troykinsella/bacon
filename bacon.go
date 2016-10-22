@@ -77,7 +77,7 @@ func NewAutoTest(o *Options) *AutoTest {
 
 func newNotificator() *notificator.Notificator {
 	return notificator.New(notificator.Options{
-		AppName: "autotest",
+		AppName: "bacon",
 	})
 }
 
@@ -307,7 +307,7 @@ func (at *AutoTest) runCommand(str string) error {
 func (at *AutoTest) notify(result bool) {
 	msg := at.notifyMessage(result)
 	if msg != "" {
-		at.n.Push("autotest", msg, "noop", notificator.UR_NORMAL)
+		at.n.Push("bacon", msg, "noop", notificator.UR_NORMAL)
 	}
 }
 

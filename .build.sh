@@ -5,8 +5,8 @@ set -xe
 cross_compile() {
   gox -arch="amd64" \
     -os="darwin linux windows" \
-    -output="autotest_{{.OS}}_{{.Arch}}" \
-    github.com/troykinsella/autotest
+    -output="bacon_{{.OS}}_{{.Arch}}" \
+    github.com/troykinsella/bacon
 }
 
 # Is a tag build?
