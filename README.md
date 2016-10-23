@@ -1,4 +1,5 @@
-# bacon
+![Bacon](https://troykinsella.github.io/bacon/bacon.png)
+---
 
 [![Version](https://badge.fury.io/gh/troykinsella%2Fbacon.svg)](https://badge.fury.io/gh/troykinsella%2Fbacon)
 [![License](https://img.shields.io/github/license/troykinsella/bacon.svg)](https://github.com/troykinsella/bacon/blob/master/LICENSE)
@@ -38,14 +39,14 @@ bacon -c "go test github.com/you/project/..." -c "echo holy shit that's wicked"
 
 ### Passing Commands
 
-Commands supplied with the `-p` option are executed only when all commands pass.
+Commands supplied with the `-p` option are executed only when all `-c` commands pass.
 ```bash
 bacon -c "go test github.com/you/project/..." -p "echo haw yeah"
 ```
 
 ### Failing Commands
 
-Commands passed with the `-f` option are executed when a command fails.
+Commands passed with the `-f` option are executed when a `-c` command fails.
 ```bash
 bacon -c "go test github.com/you/project/..." -f ./sendEmailToMicrosoft.sh
 ```
@@ -111,7 +112,7 @@ Use the `-d` (debug) option to print the effective watch list.
 By default, `bacon` includes `**/*`, which translates into "every below the CWD".
 Supply one or more alternate include globs with the `-w` (watch) option:
 ```bash
-bacon -w "github.com/you/project/**" \
+bacon -w "src/github.com/you/project/**" \
       -c "go test github.com/you/project/..."
 ```
 
@@ -120,8 +121,8 @@ bacon -w "github.com/you/project/**" \
 `bacon` excludes `**/.git/**` by default, which omits any `.git` directory.
 Pass one ore more alternate exclude globs with the `-e` option:
 ```bash
-bacon -w "github.com/you/project/**" \
-      -e "github.com/you/project/no-watchee/**" \
+bacon -w "src/github.com/you/project/**" \
+      -e "src/github.com/you/project/no-watchee/**" \
       -c "go test github.com/you/project/..."
 ```
 
