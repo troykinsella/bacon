@@ -18,7 +18,7 @@ Or, checkout [releases](https://github.com/troykinsella/bacon/releases) and down
 
 Or, run these commands:
 ```bash
-VERSION=0.0.2
+VERSION=0.0.3
 OS=linux # or darwin, or windows
 curl -SsL -o /usr/local/bin/bacon https://github.com/troykinsella/bacon/releases/download/v${VERSION}/bacon_${OS}_amd64
 chmod +x /usr/local/bin/bacon
@@ -51,12 +51,22 @@ Commands passed with the `-f` option are executed when a `-c` command fails.
 bacon -c "go test github.com/you/project/..." -f ./sendEmailToMicrosoft.sh
 ```
 
+### Command Arguments
+
+All commands are interpolated to substitute `$1` with the absolute path
+of the file that changed to trigger the command execution.
+
+```bash
+bash -c "go test github.com/you/project/..." \
+     -p "go fmt $1"
+```
+
+Here, `bacon` is running `go fmt` against the file that was just changed, if tests pass.
+
 ### Output
 
-`bacon` continuously prints command output, as well as:
-
-* An easily readable pass/fail summary line
-* Generates a system notification when commands begin to fail, and when they've recovered
+By default, `bacon` only prints summary lines, but if you pass it `-o` (show output), it
+will print all output continuously.
 
 #### Command Summary Line
 
@@ -74,7 +84,7 @@ Failures look like this:
 [19:37:13] ✗ Failed
 ```
 
-#### Status Notifications
+### Status Notifications
 
 In order to not spam you with notifications for every watched file change,
 `bacon` will only notify you when:
@@ -136,8 +146,8 @@ and/or exclude (`-e`) options as necessary to reduce the match count.
 
 ## Road Map
 
-* Tests
 * Optionally throttle command runs down to once per a configurable time duration
+* Templated summary line
 
 ## Similar Tools
 
