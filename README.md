@@ -131,7 +131,7 @@ bacon -w "src/github.com/you/project/**" \
 
 #### Excludes
 
-`bacon` excludes `**/.git/**` by default, which omits any `.git` directory.
+`bacon` excludes `**/.git` by default, which omits any `.git` directory.
 Pass one ore more alternate exclude globs with the `-e` option:
 ```bash
 bacon -w "src/github.com/you/project/**" \
