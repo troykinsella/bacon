@@ -34,21 +34,24 @@ Run `bacon -h` for comprehensive command usage.
 
 `bacon` runs the commands that you pass with the `-c` option:
 ```bash
-bacon -c "go test github.com/you/project/..." -c "echo holy shit that's wicked"
+bacon -c "go test github.com/you/project/..." \
+      -c "echo holy shit that's wicked"
 ```
 
 ### Passing Commands
 
 Commands supplied with the `-p` option are executed only when all `-c` commands pass.
 ```bash
-bacon -c "go test github.com/you/project/..." -p "echo haw yeah"
+bacon -c "go test github.com/you/project/..." \
+      -p "echo haw yeah"
 ```
 
 ### Failing Commands
 
 Commands passed with the `-f` option are executed when a `-c` command fails.
 ```bash
-bacon -c "go test github.com/you/project/..." -f ./sendEmailToMicrosoft.sh
+bacon -c "go test github.com/you/project/..." \
+      -f ./sendEmailToMicrosoft.sh
 ```
 
 ### Command Arguments
