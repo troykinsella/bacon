@@ -122,7 +122,7 @@ Use the `-d` (debug) option to print the effective watch list.
 
 #### Includes 
 
-By default, `bacon` includes `**/*`, which translates into "every below the CWD".
+By default, `bacon` includes `**/*`, which translates into "every file below the CWD".
 Supply one or more alternate include globs with the `-w` (watch) option:
 ```bash
 bacon -w "src/github.com/you/project/**" \
