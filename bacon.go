@@ -1,30 +1,30 @@
 package main
 
 import (
-	"github.com/troykinsella/bacon/executor"
-	"github.com/troykinsella/bacon/watcher"
-	"github.com/0xAX/notificator"
-	"time"
 	"fmt"
+	"github.com/0xAX/notificator"
+	"github.com/troykinsella/bacon/executor"
 	"github.com/troykinsella/bacon/util"
+	"github.com/troykinsella/bacon/watcher"
+	"time"
 )
 
 type Bacon struct {
-	w       *watcher.W
-	e       *executor.E
+	w *watcher.W
+	e *executor.E
 
 	clearScreen bool
 	showOutput  bool
 	notify      bool
 
-	n       *notificator.Notificator
+	n *notificator.Notificator
 }
 
 func NewBacon(
 	w *watcher.W,
 	e *executor.E,
 	clearScreen bool,
-    showOutput bool,
+	showOutput bool,
 	notify bool) *Bacon {
 
 	return &Bacon{
@@ -32,8 +32,8 @@ func NewBacon(
 		e: e,
 
 		clearScreen: clearScreen,
-		showOutput: showOutput,
-		notify: notify,
+		showOutput:  showOutput,
+		notify:      notify,
 
 		n: newNotificator(),
 	}

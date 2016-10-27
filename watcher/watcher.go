@@ -1,11 +1,11 @@
 package watcher
 
 import (
+	"errors"
+	"fmt"
+	"github.com/troykinsella/bacon/expander"
 	"gopkg.in/fsnotify.v1"
 	"strings"
-	"fmt"
-	"errors"
-	"github.com/troykinsella/bacon/expander"
 )
 
 type W struct {
@@ -21,7 +21,7 @@ type ChangedFunc func(f string)
 func New(
 	includes []string,
 	excludes []string,
-    debug bool) (*W, error) {
+	debug bool) (*W, error) {
 
 	e := expander.New(includes, excludes)
 
@@ -31,10 +31,10 @@ func New(
 	}
 
 	return &W{
-		e: e,
-		done: make(chan error),
+		e:         e,
+		done:      make(chan error),
 		fsWatcher: fsWatcher,
-		debug: debug,
+		debug:     debug,
 	}, nil
 }
 
@@ -63,7 +63,6 @@ func (w *W) runDispatcher() {
 		}
 	}()
 }
-
 
 func (w *W) watchPaths(paths []string) error {
 	for _, p := range paths {

@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/urfave/cli"
-	"os"
 	"github.com/troykinsella/bacon/executor"
 	"github.com/troykinsella/bacon/watcher"
+	"github.com/urfave/cli"
+	"os"
 )
 
 const (
@@ -82,7 +82,7 @@ func newBacon(c *cli.Context) (*Bacon, error) {
 
 func newRunCommand() *cli.Command {
 	return &cli.Command{
-		Name: "run",
+		Name:  "run",
 		Usage: "Execute commands once. Useful for testing a command chain.",
 		Action: func(c *cli.Context) error {
 			e, err := newExecutor(c, false)
@@ -164,7 +164,7 @@ func newCliApp() *cli.App {
 			Usage: "Enable command output.",
 		},
 		cli.BoolFlag{
-			Name: noNotify,
+			Name:  noNotify,
 			Usage: "Disable system notifications.",
 		},
 	}
