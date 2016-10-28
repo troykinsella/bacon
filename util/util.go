@@ -10,6 +10,7 @@ func IsDir(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	defer f.Close()
 	s, err := f.Stat()
 	if err != nil {
 		return false, err

@@ -248,7 +248,7 @@ bacon -w "src/github.com/you/project/**" \
 
 #### Excludes
 
-`bacon` excludes `**/.git` by default, which omits any `.git` directory.
+`bacon` excludes `**/.*` by default, which omits any `.*` (dot) file or directory.
 Pass one ore more alternate exclude globs with the `-e, --exclude` option:
 
 ```bash
@@ -257,12 +257,12 @@ bacon -w "src/github.com/you/project/**" \
       -c "go test github.com/you/project/..."
 ```
 
-If you supply an exclusion, be sure to also supply the overridden `**/.git` default,
+If you supply an exclusion, be sure to also supply the overridden `**/.*` default,
 if that's desirable.
 
 ```bash
 bacon -e "exclude-me/**" \
-      -e "**/.git" \
+      -e "**/.*" \
       -c "./test-my-stuff.sh"
 ```
 

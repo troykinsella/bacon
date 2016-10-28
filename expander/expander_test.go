@@ -70,6 +70,10 @@ func TestE_BaseDirs(t *testing.T) {
 		{[]string{"**/a/**"}, []string{}, []string{"a", "a/b", "a/c", "a/b/d"}, ""},
 		{[]string{"a/**/d"}, []string{}, []string{"a/b/d"}, ""},
 
+		{[]string{"a/*1"}, []string{}, []string{"a"}, ""},
+		{[]string{"a/b/*1"}, []string{}, []string{"a/b"}, ""},
+		{[]string{"a/b/d/*1"}, []string{}, []string{"a/b/d"}, ""},
+
 		{[]string{"a/**"}, []string{"**/b"}, []string{"a", "a/c"}, ""},
 		{[]string{"a/**"}, []string{"**/b/**"}, []string{"a", "a/b", "a/c"}, ""},
 		{[]string{"a/**"}, []string{"**/b", "**/b/**"}, []string{"a", "a/c"}, ""},

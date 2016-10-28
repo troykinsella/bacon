@@ -19,7 +19,7 @@ func New(
 	excludes []string) *E {
 
 	includes = normalizeGlobs(includes, "**/*", false)
-	excludes = normalizeGlobs(excludes, "**/.git", true)
+	excludes = normalizeGlobs(excludes, "**/.*", true)
 
 	return &E{
 		includes: includes,
@@ -45,6 +45,44 @@ func (e *E) BaseDirs() ([]string, error) {
 	return result, nil
 }
 
+func baseDir(inc string, excludes []string, resultSet map[string]bool) error {
+
+	// Special case: /** suffix
+	if strings.HasSuffix(inc, "/**") {
+		baseDir(inc[0:len(inc)-3], excludes, resultSet)
+	}
+	// Special case: /* suffix
+	if strings.HasSuffix(inc, "/*") {
+		baseDir(inc[0:len(inc)-2], excludes, resultSet)
+	}
+
+	ms, err := doublestar.Glob(inc)
+	if err != nil {
+		return err
+	}
+
+	for _, m := range ms {
+		d, err := util.IsDir(m)
+		if err != nil {
+			continue
+		}
+		if !d {
+			m = filepath.Dir(m)
+		}
+
+		ex, err := matches(m, excludes)
+		if err != nil {
+			return err
+		}
+
+		if !ex {
+			resultSet[m] = true
+		}
+	}
+
+	return nil
+}
+
 func (e *E) List() ([]string, error) {
 	result := []string{}
 
@@ -60,6 +98,7 @@ func (e *E) List() ([]string, error) {
 		}
 
 		fis, err := dir.Readdir(0)
+		dir.Close()
 		if err != nil {
 			return nil, err
 		}
@@ -84,41 +123,6 @@ func (e *E) List() ([]string, error) {
 
 	sort.Strings(result)
 	return result, nil
-}
-
-func baseDir(inc string, excludes []string, resultSet map[string]bool) error {
-
-	// Special case: /** suffix
-	if strings.HasSuffix(inc, "/**") {
-		baseDir(inc[0:len(inc)-3], excludes, resultSet)
-	}
-	// Special case: /* suffix
-	if strings.HasSuffix(inc, "/*") {
-		baseDir(inc[0:len(inc)-2], excludes, resultSet)
-	}
-
-	ms, err := doublestar.Glob(inc)
-	if err != nil {
-		return err
-	}
-
-	for _, m := range ms {
-		d, err := util.IsDir(m)
-		if err != nil || !d {
-			continue
-		}
-
-		ex, err := matches(m, excludes)
-		if err != nil {
-			return err
-		}
-
-		if !ex {
-			resultSet[m] = true
-		}
-	}
-
-	return nil
 }
 
 func (e *E) Selected(path string) (bool, error) {

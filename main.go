@@ -150,7 +150,7 @@ func newWatchFlags() []cli.Flag {
 		},
 		cli.StringSliceFlag{
 			Name:  watchExcludeLong,
-			Usage: "Exclude path `GLOB` matches from being watched. Can be repeated. Defaults to '**/.git'.",
+			Usage: "Exclude path `GLOB` matches from being watched. Can be repeated. Defaults to '**/.*'.",
 		},
 	}
 }
