@@ -9,11 +9,16 @@ import (
 	"sync"
 )
 
+const (
+	defaultShell = "bash"
+)
+
 type E struct {
 	commands     []string
 	passCommands []string
 	failCommands []string
 
+	shell      string
 	showOutput bool
 
 	mu      *sync.Mutex
@@ -31,14 +36,20 @@ func New(
 	commands []string,
 	passCommands []string,
 	failCommands []string,
+	shell string,
 	clearScreen bool,
 	showOutput bool) *E {
+
+	if shell == "" {
+		shell = defaultShell
+	}
 
 	return &E{
 		commands:     commands,
 		passCommands: passCommands,
 		failCommands: failCommands,
 
+		shell: shell,
 		showOutput: showOutput,
 
 		mu:      &sync.Mutex{},
@@ -102,7 +113,7 @@ func (e *E) makeCommand(cmd string, args []string) *exec.Cmd {
 		})
 	}
 
-	return exec.Command("sh", "-c", cmd)
+	return exec.Command(e.shell, "-c", cmd)
 }
 
 func (e *E) runCommand(str string, args []string) error {

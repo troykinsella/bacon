@@ -27,6 +27,7 @@ const (
 	showOutputLong   = showOutput + ", show-output"
 	noNotify         = "no-notify"
 	summaryFormat    = "summary-format"
+	shell            = "shell"
 )
 
 func newExecutor(c *cli.Context, cls bool) (*executor.E, error) {
@@ -37,11 +38,13 @@ func newExecutor(c *cli.Context, cls bool) (*executor.E, error) {
 
 	passCmds := c.StringSlice(passCommand)
 	failCmds := c.StringSlice(failCommand)
+	sh := c.String(shell)
 	showOut := c.Bool(showOutput)
 
 	e := executor.New(cmds,
 		passCmds,
 		failCmds,
+		sh,
 		cls,
 		showOut)
 
@@ -168,6 +171,10 @@ func newRunFlags() []cli.Flag {
 		cli.StringSliceFlag{
 			Name:  failCommandLong,
 			Usage: "Run the `CMD` when tests fail. Can be repeated.",
+		},
+		cli.StringFlag{
+			Name: shell,
+			Usage: "The shell with which to interpret commands. Default 'bash'.",
 		},
 	}
 }
