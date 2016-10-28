@@ -2,7 +2,6 @@ package watcher
 
 import (
 	"errors"
-	"fmt"
 	"github.com/troykinsella/bacon/expander"
 	"gopkg.in/fsnotify.v1"
 	"strings"
@@ -13,15 +12,13 @@ type W struct {
 	changed   ChangedFunc
 	done      chan error
 	fsWatcher *fsnotify.Watcher
-	debug     bool
 }
 
 type ChangedFunc func(f string)
 
 func New(
 	includes []string,
-	excludes []string,
-	debug bool) (*W, error) {
+	excludes []string) (*W, error) {
 
 	e := expander.New(includes, excludes)
 
@@ -34,7 +31,6 @@ func New(
 		e:         e,
 		done:      make(chan error),
 		fsWatcher: fsWatcher,
-		debug:     debug,
 	}, nil
 }
 
@@ -111,27 +107,13 @@ func (w *W) Run(changed ChangedFunc) error {
 		return errors.New("No paths to watch were matched")
 	}
 
-	if w.debug {
-		fmt.Println("Watching:")
-		for _, t := range dirs {
-			fmt.Println(t)
-		}
-	}
-
 	w.watchPaths(dirs)
-
-	if !w.debug {
-		w.changed("") // don't wait for a change
-	}
+	w.changed("") // don't wait for a change
 
 	return <-w.done
 }
 
 func (w *W) handleChange(f string) {
-	if w.debug {
-		fmt.Printf("Changed: %s\n", f)
-	}
-
 	// TODO: Throttle command executions here
 
 	w.changed(f)

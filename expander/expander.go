@@ -5,6 +5,7 @@ import (
 	"github.com/troykinsella/bacon/util"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -41,6 +42,47 @@ func (e *E) BaseDirs() ([]string, error) {
 		result = append(result, p)
 	}
 
+	return result, nil
+}
+
+func (e *E) List() ([]string, error) {
+	result := []string{}
+
+	baseDirs, err := e.BaseDirs()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, dirName := range baseDirs {
+		dir, err := os.Open(dirName)
+		if err != nil {
+			return nil, err
+		}
+
+		fis, err := dir.Readdir(0)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, fi := range fis {
+			if fi.IsDir() {
+				continue
+			}
+
+			fp := filepath.Join(dirName, fi.Name())
+			s, err := e.Selected(fp)
+			if err != nil {
+				return nil, err
+			}
+			if !s {
+				continue
+			}
+
+			result = append(result, fp)
+		}
+	}
+
+	sort.Strings(result)
 	return result, nil
 }
 
@@ -140,7 +182,7 @@ func normalizeGlobs(globs []string, defalt string, exclude bool) []string {
 	}
 
 	for i, g := range globs {
-		if strings.HasPrefix(g, "/") {
+		if filepath.IsAbs(g) {
 			globs[i] = g
 		} else {
 			globs[i] = filepath.Join(cwd, g)
@@ -160,7 +202,7 @@ func normalizeGlobs(globs []string, defalt string, exclude bool) []string {
 }
 
 func ensureRooted(path string) string {
-	if !strings.HasPrefix(path, "/") {
+	if !filepath.IsAbs(path) {
 		cwd, err := os.Getwd()
 		if err != nil {
 			panic(err)

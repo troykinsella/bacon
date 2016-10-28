@@ -122,7 +122,6 @@ func (e *E) runCommand(str string, args []string) error {
 
 	err := cmd.Run()
 	if !e.showOutput && err != nil {
-		//e.cls()
 		fmt.Fprintf(os.Stderr, "%s", &outBuf)
 	}
 	fmt.Fprintf(os.Stderr, "%s", &errBuf)

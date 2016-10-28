@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/troykinsella/bacon/executor"
+	"github.com/troykinsella/bacon/expander"
 	"github.com/troykinsella/bacon/watcher"
 	"github.com/urfave/cli"
 	"os"
@@ -10,7 +11,7 @@ import (
 
 const (
 	appName = "bacon"
-	version = "0.0.3"
+	version = "0.0.4"
 
 	command          = "c"
 	commandLong      = command + ", cmd"
@@ -18,8 +19,6 @@ const (
 	passCommandLong  = passCommand + ", pass"
 	failCommand      = "f"
 	failCommandLong  = failCommand + ", fail"
-	debug            = "d"
-	debugLong        = debug + ", debug"
 	watch            = "w"
 	watchLong        = watch + ", watch"
 	watchExclude     = "e"
@@ -27,6 +26,7 @@ const (
 	showOutput       = "o"
 	showOutputLong   = showOutput + ", show-output"
 	noNotify         = "no-notify"
+	summaryFormat    = "summary-format"
 )
 
 func newExecutor(c *cli.Context, cls bool) (*executor.E, error) {
@@ -37,7 +37,6 @@ func newExecutor(c *cli.Context, cls bool) (*executor.E, error) {
 
 	passCmds := c.StringSlice(passCommand)
 	failCmds := c.StringSlice(failCommand)
-
 	showOut := c.Bool(showOutput)
 
 	e := executor.New(cmds,
@@ -49,12 +48,18 @@ func newExecutor(c *cli.Context, cls bool) (*executor.E, error) {
 	return e, nil
 }
 
+func newExpander(c *cli.Context) (*expander.E, error) {
+	includes := c.StringSlice(watch)
+	excludes := c.StringSlice(watchExclude)
+	e := expander.New(includes, excludes)
+	return e, nil
+}
+
 func newWatcher(c *cli.Context) (*watcher.W, error) {
 	includes := c.StringSlice(watch)
 	excludes := c.StringSlice(watchExclude)
-	dbg := c.Bool(debug)
 
-	w, err := watcher.New(includes, excludes, dbg)
+	w, err := watcher.New(includes, excludes)
 	if err != nil {
 		return nil, err
 	}
@@ -75,15 +80,44 @@ func newBacon(c *cli.Context) (*Bacon, error) {
 
 	showOut := c.Bool(showOutput)
 	noNotify := c.Bool(noNotify)
+	sumFmt := c.String(summaryFormat)
 
-	b := NewBacon(w, e, true, showOut, !noNotify)
+	b := NewBacon(w,
+		e,
+		showOut,
+		!noNotify,
+		sumFmt)
 	return b, nil
+}
+
+func newListCommand() *cli.Command {
+	return &cli.Command{
+		Name:  "list",
+		Usage: "Print effective files to watch given inclusion and exclusion globs and exit.",
+		Action: func(c *cli.Context) error {
+			e, err := newExpander(c)
+			if err != nil {
+				return err
+			}
+
+			list, err := e.List()
+			if err != nil {
+				return err
+			}
+
+			for _, f := range list {
+				fmt.Println(f)
+			}
+			return nil
+		},
+		Flags: newWatchFlags(),
+	}
 }
 
 func newRunCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "run",
-		Usage: "Execute commands once. Useful for testing a command chain.",
+		Usage: "Execute commands once and exit. Useful for testing a command chain.",
 		Action: func(c *cli.Context) error {
 			e, err := newExecutor(c, false)
 			if err != nil {
@@ -103,6 +137,7 @@ func newRunCommand() *cli.Command {
 
 func defCommands(app *cli.App) {
 	app.Commands = []cli.Command{
+		*newListCommand(),
 		*newRunCommand(),
 	}
 }
@@ -111,7 +146,7 @@ func newWatchFlags() []cli.Flag {
 	return []cli.Flag{
 		cli.StringSliceFlag{
 			Name:  watchLong,
-			Usage: "Watch the path `GLOB`. Can be repeated. Defaults to './**/*'.",
+			Usage: "Watch the path `GLOB`. Can be repeated. Defaults to '**/*'.",
 		},
 		cli.StringSliceFlag{
 			Name:  watchExcludeLong,
@@ -156,16 +191,16 @@ func newCliApp() *cli.App {
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
-			Name:  debugLong,
-			Usage: "Enable " + app.Name + " debug output.",
-		},
-		cli.BoolFlag{
 			Name:  showOutputLong,
 			Usage: "Enable command output.",
 		},
 		cli.BoolFlag{
 			Name:  noNotify,
 			Usage: "Disable system notifications.",
+		},
+		cli.StringFlag{
+			Name:  summaryFormat,
+			Usage: "Go template string for custom summary lines.",
 		},
 	}
 
