@@ -46,16 +46,6 @@ func (e *E) BaseDirs() ([]string, error) {
 }
 
 func baseDir(inc string, excludes []string, resultSet map[string]bool) error {
-
-	// Special case: /** suffix
-	if strings.HasSuffix(inc, "/**") {
-		baseDir(inc[0:len(inc)-3], excludes, resultSet)
-	}
-	// Special case: /* suffix
-	if strings.HasSuffix(inc, "/*") {
-		baseDir(inc[0:len(inc)-2], excludes, resultSet)
-	}
-
 	ms, err := doublestar.Glob(inc)
 	if err != nil {
 		return err
