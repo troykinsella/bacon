@@ -7,6 +7,29 @@
 
 A tool to watch files for changes and continuously react by running commands.
 
+## Contents
+
+1. [Features](#features)
+1. [Installation](#installation)
+1. [Usage](#usage)
+    1. [TL;DR](#tl-dr)
+    1. [Program Commands](#program-commands)
+    1. [Shell Commands](#shell-commands)
+    1. [On-Success Commands](#on-success-commands)
+    1. [On-Failure Commands](#on-failure-commands)
+    1. [Command Arguments](#command-arguments)
+    1. [Watch Files](#watch-files)
+        1. [Includes](#includes)
+        1. [Excludes](#excludes)
+1. [Output](#output)
+    1. [Command Summary Line](#command-summary-line)
+        1. [Custom Summary Line](#custom-summary-line)
+    1. [Status Notifications](#status-notifications)
+1. [Troubleshooting](#troubleshooting)
+1. [Road Map](#road-map)
+1. [Similar Tools](#similar-tools)
+1. [License](#license)
+
 ## Features
 
 * Compatible with tooling for any technology (i.e. go, ruby, node.js, java, etc.); `bacon` simply runs shell commands
@@ -47,9 +70,9 @@ waiting for a watched file to change.
 
 Here.
 ```bash
-# Watch files matching **/* in the CWD, except for files in **/.git,
+# Watch files matching **/* in the CWD, except for files in **/.*,
 # and run a script when any of them change.
-bacon -c ./runme.sh
+bacon -c ./run-me.sh
 
 # Watch Go lang project source files and run "go test" when any change.
 bacon -w 'src/github.com/you/project/**/*.go' \
@@ -58,6 +81,7 @@ bacon -w 'src/github.com/you/project/**/*.go' \
 # Watch Node.js project source files and run mocha tests when any change.
 bacon -w '**/*.js' \
       -w '**/*.json' \
+      -e node_modules \
       -c 'mocha test/unit/*.js'
 
 # Watch a mixed set of files by including some then excluding from those.
@@ -153,14 +177,60 @@ prior to being passed into `bacon`.
 When commands are executed not as a result of a file change, such as immediately after
 running `bacon` or when using `bacon run`, `$1` is substituted with an empty string ("").
 
-### Output
+### Watch Files
+
+Files can be watched for changes. "Change", specifically,
+means: When a file is written to. Creation and deletion changes are ignored.
+
+Files are selected for watching using extended glob syntax (having support for **).
+See the [bmatcuk/doublestar](https://github.com/bmatcuk/doublestar) documentation for glob syntax.
+`bacon` does not follow symlinks in resolving matches. Globs that do not start with `/` are
+considered relative to the CWD.
+
+A list of include globs and a list of exclude globs can be passed into `bacon` to tell it what to watch.
+First, the list of includes is expanded, then the result is passed through the excludes list to arrive
+at the effective list of files to watch.
+
+Use the `bacon list` command to print the effective watch list, and exit.
+
+#### Includes
+
+Without telling `bacon` otherwise, it includes `**/*`, which translates into
+"every file below the CWD". Supply one or more alternate include globs with the
+`-w, --watch` option:
+```bash
+bacon -w "src/github.com/you/project/**" \
+      -c "go test github.com/you/project/..."
+```
+
+#### Excludes
+
+`bacon` excludes `**/.*` by default, which omits any `.*` (dot) file or directory.
+Pass one ore more alternate exclude globs with the `-e, --exclude` option:
+
+```bash
+bacon -w "src/github.com/you/project/**" \
+      -e "src/github.com/you/project/no-watchee/**" \
+      -c "go test github.com/you/project/..."
+```
+
+If you supply an exclusion, be sure to also supply the overridden `**/.*` default,
+if that's desirable.
+
+```bash
+bacon -e "exclude-me/**" \
+      -e "**/.*" \
+      -c ./test-my-stuff.sh
+```
+
+## Output
 
 By default, `bacon` only prints summary lines, clearing the screen in between command executions
 to hide clutter. But, if you pass it `-o, --show-output`, it will print all command output continuously.
 Regardless of this option, if an execution fails, the output and error streams of the failing
 command are printed to `bacon`'s standard error.
 
-#### Command Summary Line
+### Command Summary Line
 
 Since it takes more than a single glance to figure out from the command output if 
 commands have passed or failed, `bacon` prints an ansii-coloured summary line after
@@ -220,52 +290,6 @@ In order to not spam you with notifications for every watched file change,
 * Commands were passing, but are now failing
 
 If you don't want notifications, pass the `--no-notify` option.
-
-### Watch Targets
-
-Files and directories (all files within a directory) can be watched for changes. "Change", specifically,
-means: when a file is written to; creation and deletion changes are ignored.
-
-Paths are selected for watching using extended glob syntax (having support for **).
-See the [bmatcuk/doublestar](https://github.com/bmatcuk/doublestar) documentation for glob syntax.
-`bacon` does not follow symlinks in resolving matches. Globs that do not start with `/` are
-considered relative to the CWD.
-
-A list of include globs and a list of exclude globs can be passed into `bacon` to tell it what to watch.
-First, the list of includes is expanded, then the result is passed through the excludes list to arrive
-at the effective list of matched files.
-
-Use the `bacon list` command to print the effective watch list, and exit.
-
-#### Includes 
-
-Without telling `bacon` otherwise, it includes `**/*`, which translates into 
-"every file below the CWD". Supply one or more alternate include globs with the 
-`-w, --watch` option:
-```bash
-bacon -w "src/github.com/you/project/**" \
-      -c "go test github.com/you/project/..."
-```
-
-#### Excludes
-
-`bacon` excludes `**/.*` by default, which omits any `.*` (dot) file or directory.
-Pass one ore more alternate exclude globs with the `-e, --exclude` option:
-
-```bash
-bacon -w "src/github.com/you/project/**" \
-      -e "src/github.com/you/project/no-watchee/**" \
-      -c "go test github.com/you/project/..."
-```
-
-If you supply an exclusion, be sure to also supply the overridden `**/.*` default,
-if that's desirable.
-
-```bash
-bacon -e "exclude-me/**" \
-      -e "**/.*" \
-      -c ./test-my-stuff.sh
-```
 
 ## Troubleshooting
 
