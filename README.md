@@ -95,6 +95,7 @@ bacon run -c ./unit-tests.sh \
 `bacon` to execute with the `-c` option (see [Shell Commands](#shell-commands)).
 
 Commands:
+
 Command     | Description
 ----------- | -----------
 `<omitted>` | Watch a set of files, and run the given shell commands when they change.
