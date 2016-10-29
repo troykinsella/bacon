@@ -21,7 +21,7 @@ Put the binary in a convenient place, such as `/usr/local/bin/bacon`.
 
 Or, run these commands to download and install:
 ```bash
-VERSION=0.0.4
+VERSION=0.0.5
 OS=darwin # or linux, or windows
 curl -SsL -o /usr/local/bin/bacon https://github.com/troykinsella/bacon/releases/download/v${VERSION}/bacon_${OS}_amd64
 chmod +x /usr/local/bin/bacon
@@ -66,9 +66,9 @@ bacon -w '**/*.sh' \
       -c ./test.sh
 
 # Run commands only when pass or fail.
-bacon -c check-syntax.sh
-      -c find-bugs.sh
-      -p notfiy-tom-vogel-of-great-success.sh
+bacon -c check-syntax.sh \
+      -c find-bugs.sh \
+      -p notfiy-tom-vogel-of-great-success.sh \
       -f notify-tom-vogel-of-great-failure.sh
 
 # Use long options for readability.
@@ -264,7 +264,7 @@ if that's desirable.
 ```bash
 bacon -e "exclude-me/**" \
       -e "**/.*" \
-      -c "./test-my-stuff.sh"
+      -c ./test-my-stuff.sh
 ```
 
 ## Troubleshooting
