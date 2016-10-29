@@ -30,7 +30,7 @@ const (
 	shell            = "shell"
 )
 
-func newExecutor(c *cli.Context, cls bool) (*executor.E, error) {
+func newExecutor(c *cli.Context) (*executor.E, error) {
 	cmds := c.StringSlice(command)
 	if cmds == nil || len(cmds) == 0 {
 		return nil, cli.NewExitError(command+" option required", 1)
@@ -45,7 +45,6 @@ func newExecutor(c *cli.Context, cls bool) (*executor.E, error) {
 		passCmds,
 		failCmds,
 		sh,
-		cls,
 		showOut)
 
 	return e, nil
@@ -76,7 +75,7 @@ func newBacon(c *cli.Context) (*Bacon, error) {
 		return nil, err
 	}
 
-	e, err := newExecutor(c, true)
+	e, err := newExecutor(c)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +121,7 @@ func newRunCommand() *cli.Command {
 		Name:  "run",
 		Usage: "Execute commands once and exit. Useful for testing a command chain.",
 		Action: func(c *cli.Context) error {
-			e, err := newExecutor(c, false)
+			e, err := newExecutor(c)
 			if err != nil {
 				return err
 			}

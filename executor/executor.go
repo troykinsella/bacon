@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strconv"
 	"sync"
+	"io"
 )
 
 const (
@@ -20,6 +21,9 @@ type E struct {
 
 	shell      string
 	showOutput bool
+
+	out io.Writer
+	err io.Writer
 
 	mu      *sync.Mutex
 	first   bool
@@ -37,7 +41,6 @@ func New(
 	passCommands []string,
 	failCommands []string,
 	shell string,
-	clearScreen bool,
 	showOutput bool) *E {
 
 	if shell == "" {
@@ -51,6 +54,9 @@ func New(
 
 		shell: shell,
 		showOutput: showOutput,
+
+		out: os.Stdout,
+		err: os.Stderr,
 
 		mu:      &sync.Mutex{},
 		first:   true,
@@ -125,7 +131,7 @@ func (e *E) runCommand(str string, args []string) error {
 	var errBuf bytes.Buffer
 
 	if e.showOutput {
-		cmd.Stdout = os.Stdout
+		cmd.Stdout = e.out
 	} else {
 		cmd.Stdout = &outBuf
 	}
@@ -133,9 +139,9 @@ func (e *E) runCommand(str string, args []string) error {
 
 	err := cmd.Run()
 	if !e.showOutput && err != nil {
-		fmt.Fprintf(os.Stderr, "%s", &outBuf)
+		fmt.Fprintf(e.err, "%s", &outBuf)
 	}
-	fmt.Fprintf(os.Stderr, "%s", &errBuf)
+	fmt.Fprintf(e.err, "%s", &errBuf)
 
 	return err
 }
