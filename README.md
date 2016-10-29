@@ -12,7 +12,7 @@ A tool to watch files for changes and continuously react by running commands.
 1. [Features](#features)
 1. [Installation](#installation)
 1. [Usage](#usage)
-    1. [TL;DR](#tl-dr)
+    1. [TL;DR](#tldr)
     1. [Program Commands](#program-commands)
     1. [Shell Commands](#shell-commands)
     1. [On-Success Commands](#on-success-commands)
