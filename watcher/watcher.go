@@ -5,13 +5,17 @@ import (
 	"github.com/troykinsella/bacon/expander"
 	"gopkg.in/fsnotify.v1"
 	"strings"
+	"time"
 )
+
+const eventThrottle = 100 * time.Millisecond
 
 type W struct {
 	e         *expander.E
 	changed   ChangedFunc
 	done      chan error
 	fsWatcher *fsnotify.Watcher
+	events    map[string]time.Time
 }
 
 type ChangedFunc func(f string)
@@ -31,6 +35,7 @@ func New(
 		e:         e,
 		done:      make(chan error),
 		fsWatcher: fsWatcher,
+		events:    make(map[string]time.Time),
 	}, nil
 }
 
@@ -114,7 +119,11 @@ func (w *W) Run(changed ChangedFunc) error {
 }
 
 func (w *W) handleChange(f string) {
-	// TODO: Throttle command executions here
+	last := w.events[f]
+	if !last.IsZero() && time.Now().Sub(last) < eventThrottle {
+		return
+	}
 
+	w.events[f] = time.Now()
 	w.changed(f)
 }

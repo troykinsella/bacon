@@ -3,11 +3,11 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
 	"sync"
-	"io"
 )
 
 const (
@@ -52,7 +52,7 @@ func New(
 		passCommands: passCommands,
 		failCommands: failCommands,
 
-		shell: shell,
+		shell:      shell,
 		showOutput: showOutput,
 
 		out: os.Stdout,

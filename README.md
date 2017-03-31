@@ -306,6 +306,11 @@ Adjust your include (`-w`), and/or exclude (`-e`) options as necessary to reduce
 System notifications are supported by [0xAX/notificator](https://github.com/0xAX/notificator).
 Refer to this documentation to see if notifications are supported on your operating system.
 
+### My commands are executing endlessly
+
+The commands you're running are potentially modifying files, causing and endless execution loop.
+Stop it. In the future `bacon` will detect endless build loops.
+
 ### Typing out all these options sucks! wtf fml
 
 Make a shell script!
@@ -313,6 +318,7 @@ Make a shell script!
 ## Road Map
 
 * Optionally throttle command runs down to once per a configurable time duration
+* Detect endless build loops
 
 ## Similar Tools
 

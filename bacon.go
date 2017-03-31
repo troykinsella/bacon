@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/0xAX/notificator"
 	"github.com/troykinsella/bacon/executor"
 	"github.com/troykinsella/bacon/util"
@@ -9,20 +10,19 @@ import (
 	"path/filepath"
 	"text/template"
 	"time"
-	"fmt"
 )
 
 const (
 	defaultSummaryFormat = "[{{ .timeStamp }}] {{ .colorStart }}{{ .statusSymbol }} {{ .status }}{{ .colorEnd }}"
 
-	statusRunning = "Running"
-	statusPassed = "Passed"
-	statusFailed = "Failed"
+	statusRunning   = "Running"
+	statusPassed    = "Passed"
+	statusFailed    = "Failed"
 	statusRecovered = "Back to normal"
 
 	symbolRunning = "→"
-	symbolPassed = "✓"
-	symbolFailed = "✗"
+	symbolPassed  = "✓"
+	symbolFailed  = "✗"
 )
 
 type Bacon struct {

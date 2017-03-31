@@ -172,7 +172,7 @@ func newRunFlags() []cli.Flag {
 			Usage: "Run the `CMD` when tests fail. Can be repeated.",
 		},
 		cli.StringFlag{
-			Name: shell,
+			Name:  shell,
 			Usage: "The shell with which to interpret commands. Default 'bash'.",
 		},
 	}
