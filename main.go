@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	appName = "bacon"
-	version = "0.0.5"
+	AppName = "bacon"
 
 	command          = "c"
 	commandLong      = command + ", cmd"
@@ -28,6 +27,10 @@ const (
 	noNotify         = "no-notify"
 	summaryFormat    = "summary-format"
 	shell            = "shell"
+)
+
+var (
+	AppVersion  = "0.0.0-dev.0"
 )
 
 func newExecutor(c *cli.Context) (*executor.E, error) {
@@ -180,8 +183,8 @@ func newRunFlags() []cli.Flag {
 
 func newCliApp() *cli.App {
 	app := cli.NewApp()
-	app.Name = appName
-	app.Version = version
+	app.Name = AppName
+	app.Version = AppVersion
 	app.Usage = "Watch files and run commands upon changes"
 	app.Author = "Troy Kinsella"
 	app.Action = func(c *cli.Context) error {

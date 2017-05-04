@@ -61,7 +61,7 @@ func NewBacon(
 
 func newNotificator() *notificator.Notificator {
 	return notificator.New(notificator.Options{
-		AppName: appName,
+		AppName: AppName,
 	})
 }
 
@@ -148,7 +148,7 @@ func (b *Bacon) pushNotification(r *executor.Result) {
 
 	msg := b.notifyMessage(r)
 	if msg != "" {
-		b.n.Push(appName, msg, "noop", notificator.UR_NORMAL)
+		b.n.Push(AppName, msg, "noop", notificator.UR_NORMAL)
 	}
 }
 

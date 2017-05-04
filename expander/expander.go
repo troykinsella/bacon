@@ -38,7 +38,7 @@ func (e *E) BaseDirs() ([]string, error) {
 	}
 
 	result := []string{}
-	for p, _ := range set {
+	for p := range set {
 		result = append(result, p)
 	}
 
