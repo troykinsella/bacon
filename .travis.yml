@@ -7,7 +7,7 @@ install:
 script:
 - go test -v -cover ./...
 before_deploy:
-- "./.build.sh"
+- test "$TRAVIS_PULL_REQUEST" == "false" && test -n "$TRAVIS_TAG" && make dist
 - sha256sum bacon_* > sha256sum.txt
 deploy:
   provider: releases
