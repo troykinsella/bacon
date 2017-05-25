@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"strconv"
 	"sync"
 )
 
@@ -107,23 +106,13 @@ func (e *E) runFailCommands(args []string) {
 	}
 }
 
-func (e *E) makeCommand(cmd string, args []string) *exec.Cmd {
-	argLen := int64(len(args))
-	if args != nil && argLen > 0 {
-		cmd = os.Expand(cmd, func(token string) string {
-			i, err := strconv.ParseInt(token, 10, 0)
-			if err == nil && i < argLen {
-				return args[i]
-			}
-			return ""
-		})
-	}
-
-	return exec.Command(e.shell, "-c", cmd)
+func (e *E) makeCommand(cmdStr string, args []string) *exec.Cmd {
+	cmd := exec.Command(e.shell, "-c", cmdStr)
+	cmd.Env = os.Environ()
+	return cmd
 }
 
 func (e *E) runCommand(str string, args []string) error {
-
 	args = append([]string{str}, args...)
 	cmd := e.makeCommand(str, args)
 

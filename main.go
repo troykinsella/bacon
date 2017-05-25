@@ -7,11 +7,17 @@ import (
 	"github.com/troykinsella/bacon/watcher"
 	"github.com/urfave/cli"
 	"os"
+	"github.com/troykinsella/bacon/baconfile"
+	"errors"
+	"io/ioutil"
+	"github.com/troykinsella/bacon/util"
 )
 
 const (
 	AppName = "bacon"
 
+	baconFile        = "b"
+	baconFileLong    = baconFile + ", baconfile"
 	command          = "c"
 	commandLong      = command + ", cmd"
 	passCommand      = "p"
@@ -27,6 +33,8 @@ const (
 	noNotify         = "no-notify"
 	summaryFormat    = "summary-format"
 	shell            = "shell"
+
+	defaultTarget    = "default"
 )
 
 var (
@@ -44,11 +52,13 @@ func newExecutor(c *cli.Context) (*executor.E, error) {
 	sh := c.String(shell)
 	showOut := c.Bool(showOutput)
 
-	e := executor.New(cmds,
+	e := executor.New(
+		cmds,
 		passCmds,
 		failCmds,
 		sh,
-		showOut)
+		showOut,
+	)
 
 	return e, nil
 }
@@ -87,11 +97,13 @@ func newBacon(c *cli.Context) (*Bacon, error) {
 	noNotify := c.Bool(noNotify)
 	sumFmt := c.String(summaryFormat)
 
-	b := NewBacon(w,
+	b := NewBacon(
+		w,
 		e,
 		showOut,
 		!noNotify,
-		sumFmt)
+		sumFmt,
+	)
 	return b, nil
 }
 
@@ -119,9 +131,9 @@ func newListCommand() *cli.Command {
 	}
 }
 
-func newRunCommand() *cli.Command {
+func newCommandCommand() *cli.Command {
 	return &cli.Command{
-		Name:  "run",
+		Name:  "command",
 		Usage: "Execute commands once and exit. Useful for testing a command chain.",
 		Action: func(c *cli.Context) error {
 			e, err := newExecutor(c)
@@ -140,8 +152,138 @@ func newRunCommand() *cli.Command {
 	}
 }
 
+func loadBaconfile(path string, required bool) (*baconfile.B, error) {
+	exists, err := util.Exists(path)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		if required {
+			return nil, fmt.Errorf("Baconfile not found: %s", path)
+		}
+		return nil, nil
+	}
+
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	bf, err := baconfile.Unmarshal(bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return bf, nil
+}
+
+func findBaconfile(c *cli.Context) (*baconfile.B, error) {
+	searchOrder := []string{
+		c.String(baconFile),
+		"Baconfile",
+		"Baconfile.yml",
+		"Baconfile.yaml",
+	}
+
+	for i, path := range searchOrder {
+		if path == "" {
+			continue
+		}
+
+		bf, err := loadBaconfile(path, i == 0)
+		if err != nil {
+			return nil, err
+		}
+		if bf != nil {
+			return bf, nil
+		}
+	}
+
+	return nil, errors.New("Baconfile not found")
+}
+
+func newBaconForBaconfile(c *cli.Context, bc *baconfile.B, targetName string) (*Bacon, error) {
+	if targetName == "" {
+		targetName = defaultTarget
+	}
+
+	target := bc.Targets[targetName]
+	if target == nil {
+		return nil, fmt.Errorf("target not found: %s", targetName)
+	}
+
+	w, err := watcher.New(target.Watch, target.Exclude)
+	if err != nil {
+		return nil, err
+	}
+
+	showOut := c.Bool(showOutput)
+	sh := c.String(shell)
+
+	e := executor.New(
+		target.Run,
+		target.Pass,
+		target.Fail,
+		sh,
+		showOut,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	noNotify := c.Bool(noNotify)
+	sumFmt := c.String(summaryFormat)
+
+	b := NewBacon(
+		w,
+		e,
+		showOut,
+		!noNotify,
+		sumFmt,
+	)
+	return b, nil
+}
+
+func newRunCommand() *cli.Command {
+	return &cli.Command{
+		Name: "run",
+		Usage: "TODO",
+		Action: func(c *cli.Context) error {
+			bf, err := findBaconfile(c)
+			if err != nil {
+				return err
+			}
+
+			var target string
+			args := c.Args()
+			if len(args) > 0 {
+				target = args[0]
+			}
+
+			b, err := newBaconForBaconfile(c, bf, target)
+			if err != nil {
+				return err
+			}
+
+			err = b.Run()
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name: baconFileLong,
+				Usage: "",
+			},
+		},
+	}
+}
+
 func defCommands(app *cli.App) {
 	app.Commands = []cli.Command{
+		*newCommandCommand(),
 		*newListCommand(),
 		*newRunCommand(),
 	}
@@ -168,11 +310,11 @@ func newRunFlags() []cli.Flag {
 		},
 		cli.StringSliceFlag{
 			Name:  passCommandLong,
-			Usage: "Run the `CMD` when tests pass. Can be repeated.",
+			Usage: "Run the `CMD` when commands pass. Can be repeated.",
 		},
 		cli.StringSliceFlag{
 			Name:  failCommandLong,
-			Usage: "Run the `CMD` when tests fail. Can be repeated.",
+			Usage: "Run the `CMD` when commands fail. Can be repeated.",
 		},
 		cli.StringFlag{
 			Name:  shell,
