@@ -44,9 +44,9 @@ Put the binary in a convenient place, such as `/usr/local/bin/bacon`.
 
 Or, run these commands to download and install:
 ```bash
-VERSION=0.0.6
+VERSION=0.0.7
 OS=darwin # or linux, or windows
-curl -SsL -o /usr/local/bin/bacon https://github.com/troykinsella/bacon/releases/download/v${VERSION}/bacon_${OS}_amd64
+curl -SL -o /usr/local/bin/bacon https://github.com/troykinsella/bacon/releases/download/v${VERSION}/bacon_${OS}_amd64
 chmod +x /usr/local/bin/bacon
 ```
 

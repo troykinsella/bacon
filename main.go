@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	AppVersion  = "0.0.0-dev.0"
+	AppVersion = "0.0.0-dev.0"
 )
 
 func newExecutor(c *cli.Context) (*executor.E, error) {
