@@ -71,7 +71,7 @@ func (b *Bacon) Run() error {
 		b.printSummary(nil, f, nil)
 
 		start := time.Now()
-		r := b.e.RunCommands([]string{f})
+		r := b.e.RunCommands(f, nil)
 		if r.Passing {
 			b.cls()
 		}

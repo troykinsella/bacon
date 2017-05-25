@@ -21,6 +21,7 @@ A tool to watch files for changes and continuously react by running commands.
     1. [Watch Files](#watch-files)
         1. [Includes](#includes)
         1. [Excludes](#excludes)
+    1. [Baconfile](#baconfile)
 1. [Output](#output)
     1. [Command Summary Line](#command-summary-line)
         1. [Custom Summary Line](#custom-summary-line)
@@ -32,10 +33,11 @@ A tool to watch files for changes and continuously react by running commands.
 
 ## Features
 
-* Compatible with tooling for any technology (i.e. go, ruby, node.js, java, etc.); `bacon` simply runs shell commands
+* Compatible with tooling for any technology (i.e. go, ruby, node.js, java, etc.); `bacon` simply executes shell commands
 * Control files to watch using extended globs
 * Command status summary line
 * Command status system notifications
+* Store bacon configuration in a yaml Baconfile
 
 ## Installation
 
@@ -44,7 +46,7 @@ Put the binary in a convenient place, such as `/usr/local/bin/bacon`.
 
 Or, run these commands to download and install:
 ```bash
-VERSION=0.0.7
+VERSION=0.1.0
 OS=darwin # or linux, or windows
 curl -SL -o /usr/local/bin/bacon https://github.com/troykinsella/bacon/releases/download/v${VERSION}/bacon_${OS}_amd64
 chmod +x /usr/local/bin/bacon
@@ -105,11 +107,11 @@ bacon list -w '**/*.rb' \
            -e '**/.git' \
            -e '**/naughty'
 
-# Run the given commands once, as bacon would after a watched file change,
+# Execute the given commands once, as bacon would after a watched file change,
 # then exit.
-bacon run -c ./unit-tests.sh \
-          -c ./int-tests.sh \
-          -p ./celebrate.sh
+bacon command -c ./unit-tests.sh \
+              -c ./int-tests.sh \
+              -p ./celebrate.sh
 ```
 
 ### Program Commands
@@ -123,8 +125,9 @@ Commands:
 Command     | Description
 ----------- | -----------
 `<omitted>` | Watch a set of files, and run the given shell commands when they change.
+`command`   | Execute the given shell commands as `bacon` would when watching files, and exit.
 `list`      | Print a list of files matched by the given inclusion and exclusion glob expressions, and exit.
-`run`       | Run the given shell commands as `bacon` would when watching files, and exit.
+`run`       | Load a Baconfile and run a target, which specifies a set of files to watch, and commands to run when they change.
 
 Run `bacon -h` for comprehensive usage.
 
@@ -162,20 +165,20 @@ These "fail" commands do not influence the final pass/fail result.
 
 ### Command Arguments
 
-All commands are interpolated to substitute `$1` with the absolute path
-of the file that changed to trigger the command execution.
+All commands are provided a `$BACON_CHANGED` environment variable containing the absolute path
+of the file that changed to trigger the command execution, if any.
 
 ```bash
 bash -c "go test github.com/you/project/..." \
-     -p 'go fmt $1'
+     -p 'go fmt $BACON_CHANGED'
 ```
 
 Here, `bacon` is running `go fmt` against the file that was just changed, if tests pass.
-Note: Be sure to pass `$1` in single quotes so that your shell doesn't interpret it
+Note: Be sure to pass `$BACON_CHANGED` in single quotes so that your shell doesn't interpret it
 prior to being passed into `bacon`.
 
 When commands are executed not as a result of a file change, such as immediately after
-running `bacon` or when using `bacon run`, `$1` is substituted with an empty string ("").
+running `bacon` or when using `bacon command`, `$BACON_CHANGED` is substituted with an empty string ("").
 
 ### Watch Files
 
@@ -222,6 +225,35 @@ bacon -e "exclude-me/**" \
       -e "**/.*" \
       -c ./test-my-stuff.sh
 ```
+
+### Baconfile
+
+The `bacon run` command loads a `Baconfile` to find instructions for which files to watch
+and what commands to execute. A `Baconfile` contains "targets" which are configuration profiles.
+
+If a `Baconfile` is not specified with the `-b` option, `bacon` searches for one in this order:
+
+* `Baconfile`
+* `Baconfile.yml`
+* `Baconfile.yaml`
+* `.Baconfile`
+* `.Baconfile.yml`
+* `.Baconfile.yaml`
+
+`Baconfile` format:
+
+```yaml
+---
+targets:
+  target:
+    watch: [ "some/files/**" ]
+    command: [ "echo run always", "test.sh" ]
+    pass: [ "echo passed" ]
+    fail: [ "echo failed" ]
+```
+
+The `default` target is special in that it is loaded when a target name is not
+supplied to the `bacon run [target]` command.
 
 ## Output
 

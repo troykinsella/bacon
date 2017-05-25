@@ -1,8 +1,8 @@
 package util
 
 import (
-	"fmt"
 	"os"
+	"fmt"
 )
 
 func Exists(path string) (bool, error) {

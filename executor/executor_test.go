@@ -224,7 +224,7 @@ func TestE_RunCommands(t *testing.T) {
 		e.out = &outBuf
 		e.err = &outBuf
 
-		r := e.RunCommands(test.args)
+		r := e.RunCommands("", test.args)
 		outStr := outBuf.String()
 
 		if !reflect.DeepEqual(r, test.expectedResult) {

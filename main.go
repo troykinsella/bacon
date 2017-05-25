@@ -11,6 +11,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"github.com/troykinsella/bacon/util"
+	"strings"
 )
 
 const (
@@ -70,20 +71,11 @@ func newExpander(c *cli.Context) (*expander.E, error) {
 	return e, nil
 }
 
-func newWatcher(c *cli.Context) (*watcher.W, error) {
-	includes := c.StringSlice(watch)
-	excludes := c.StringSlice(watchExclude)
-
-	w, err := watcher.New(includes, excludes)
-	if err != nil {
-		return nil, err
-	}
-
-	return w, nil
-}
-
 func newBacon(c *cli.Context) (*Bacon, error) {
-	w, err := newWatcher(c)
+	w, err := watcher.New(
+		c.StringSlice(watch),
+		c.StringSlice(watchExclude),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +133,7 @@ func newCommandCommand() *cli.Command {
 				return err
 			}
 
-			r := e.RunCommands(nil)
+			r := e.RunCommands("", nil)
 			if !r.Passing {
 				return cli.NewExitError("", 1)
 			}
@@ -183,6 +175,9 @@ func findBaconfile(c *cli.Context) (*baconfile.B, error) {
 		"Baconfile",
 		"Baconfile.yml",
 		"Baconfile.yaml",
+		".Baconfile",
+		".Baconfile.yml",
+		".Baconfile.yaml",
 	}
 
 	for i, path := range searchOrder {
@@ -202,37 +197,48 @@ func findBaconfile(c *cli.Context) (*baconfile.B, error) {
 	return nil, errors.New("Baconfile not found")
 }
 
-func newBaconForBaconfile(c *cli.Context, bc *baconfile.B, targetName string) (*Bacon, error) {
+func newBaconForBaconfile(
+	c *cli.Context,
+	bc *baconfile.B,
+	targetName string,
+	args []string,
+) (*Bacon, error) {
 	if targetName == "" {
 		targetName = defaultTarget
 	}
 
 	target := bc.Targets[targetName]
 	if target == nil {
-		return nil, fmt.Errorf("target not found: %s", targetName)
+		return nil, fmt.Errorf("Baconfile target not found: %s", targetName)
 	}
 
-	w, err := watcher.New(target.Watch, target.Exclude)
+	includes := injectArgs(target.Watch, args)
+	excludes := injectArgs(target.Exclude, args)
+
+	w, err := watcher.New(includes, excludes)
 	if err != nil {
 		return nil, err
 	}
 
-	showOut := c.Bool(showOutput)
-	sh := c.String(shell)
+	showOut := c.GlobalBool(showOutput)
+
+	commands := injectArgs(target.Command, args)
+	passCommands := injectArgs(target.Pass, args)
+	failCommands := injectArgs(target.Fail, args)
 
 	e := executor.New(
-		target.Run,
-		target.Pass,
-		target.Fail,
-		sh,
+		commands,
+		passCommands,
+		failCommands,
+		target.Shell,
 		showOut,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	noNotify := c.Bool(noNotify)
-	sumFmt := c.String(summaryFormat)
+	noNotify := c.GlobalBool(noNotify)
+	sumFmt := c.GlobalString(summaryFormat)
 
 	b := NewBacon(
 		w,
@@ -244,10 +250,26 @@ func newBaconForBaconfile(c *cli.Context, bc *baconfile.B, targetName string) (*
 	return b, nil
 }
 
+func injectArgs(list []string, args []string) []string {
+	result := list[:]
+	for argIndex, arg := range args {
+		for i, li := range result {
+			result[i] = injectArg(li, argIndex + 1, arg)
+		}
+	}
+	return result
+}
+
+func injectArg(str string, index int, value string) string {
+	varName := fmt.Sprintf("$%d", index)
+	return strings.Replace(str, varName, value, -1)
+}
+
 func newRunCommand() *cli.Command {
 	return &cli.Command{
 		Name: "run",
-		Usage: "TODO",
+		Usage: "Load configuration from a Baconfile target. The default target name is \"default\".",
+		ArgsUsage: "[target] [target arguments]",
 		Action: func(c *cli.Context) error {
 			bf, err := findBaconfile(c)
 			if err != nil {
@@ -258,9 +280,10 @@ func newRunCommand() *cli.Command {
 			args := c.Args()
 			if len(args) > 0 {
 				target = args[0]
+				args = args[1:]
 			}
 
-			b, err := newBaconForBaconfile(c, bf, target)
+			b, err := newBaconForBaconfile(c, bf, target, args)
 			if err != nil {
 				return err
 			}
@@ -275,7 +298,7 @@ func newRunCommand() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name: baconFileLong,
-				Usage: "",
+				Usage: "The `PATH` to the Baconfile to load (default: Baconfile, Baconfile.yml, Baconfile.yaml)",
 			},
 		},
 	}
@@ -293,11 +316,11 @@ func newWatchFlags() []cli.Flag {
 	return []cli.Flag{
 		cli.StringSliceFlag{
 			Name:  watchLong,
-			Usage: "Watch the path `GLOB`. Can be repeated. Defaults to '**/*'.",
+			Usage: "Watch the path `GLOB`. Can be repeated. (default: \"**/*\")",
 		},
 		cli.StringSliceFlag{
 			Name:  watchExcludeLong,
-			Usage: "Exclude path `GLOB` matches from being watched. Can be repeated. Defaults to '**/.*'.",
+			Usage: "Exclude path `GLOB` matches from being watched. Can be repeated. (default: \"**/.*\")",
 		},
 	}
 }
@@ -318,7 +341,7 @@ func newRunFlags() []cli.Flag {
 		},
 		cli.StringFlag{
 			Name:  shell,
-			Usage: "The shell with which to interpret commands. Default 'bash'.",
+			Usage: "The shell with which to interpret commands. (default: \"bash\")",
 		},
 	}
 }
@@ -343,15 +366,15 @@ func newCliApp() *cli.App {
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  showOutputLong,
-			Usage: "Enable command output.",
+			Usage: "Enable command output",
 		},
 		cli.BoolFlag{
 			Name:  noNotify,
-			Usage: "Disable system notifications.",
+			Usage: "Disable system notifications",
 		},
 		cli.StringFlag{
 			Name:  summaryFormat,
-			Usage: "Go template string for custom summary lines.",
+			Usage: "Go template string for custom summary lines",
 		},
 	}
 

@@ -63,11 +63,11 @@ func New(
 	}
 }
 
-func (e *E) RunCommands(args []string) *Result {
+func (e *E) RunCommands(changed string, args []string) *Result {
 	pass := true
 
 	for _, cmd := range e.commands {
-		err := e.runCommand(cmd, args)
+		err := e.runCommand(changed, cmd, args)
 		if err != nil {
 			pass = false
 			break
@@ -75,17 +75,18 @@ func (e *E) RunCommands(args []string) *Result {
 	}
 
 	if pass {
-		e.runPassCommands(args)
+		e.runPassCommands(changed, args)
 	} else {
-		e.runFailCommands(args)
+		e.runFailCommands(changed, args)
 	}
 
 	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	first := e.first
 	e.first = false
 	wasPassing := e.passing
 	e.passing = pass
-	e.mu.Unlock()
 
 	return &Result{
 		Passing:    pass,
@@ -94,15 +95,15 @@ func (e *E) RunCommands(args []string) *Result {
 	}
 }
 
-func (e *E) runPassCommands(args []string) {
+func (e *E) runPassCommands(changed string, args []string) {
 	for _, cmd := range e.passCommands {
-		e.runCommand(cmd, args)
+		e.runCommand(changed, cmd, args)
 	}
 }
 
-func (e *E) runFailCommands(args []string) {
+func (e *E) runFailCommands(changed string, args []string) {
 	for _, cmd := range e.failCommands {
-		e.runCommand(cmd, args)
+		e.runCommand(changed, cmd, args)
 	}
 }
 
@@ -112,9 +113,12 @@ func (e *E) makeCommand(cmdStr string, args []string) *exec.Cmd {
 	return cmd
 }
 
-func (e *E) runCommand(str string, args []string) error {
+func (e *E) runCommand(changed string, str string, args []string) error {
 	args = append([]string{str}, args...)
 	cmd := e.makeCommand(str, args)
+	if changed != "" {
+		cmd.Env = append(cmd.Env, "BACON_CHANGED=" + changed)
+	}
 
 	var outBuf bytes.Buffer
 	var errBuf bytes.Buffer

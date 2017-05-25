@@ -2,7 +2,7 @@ package baconfile
 
 import (
 	"gopkg.in/yaml.v2"
-	"errors"
+	"fmt"
 )
 
 var Version = "1.0"
@@ -13,12 +13,12 @@ type B struct {
 }
 
 type Target struct {
-	Watch []string   `yaml:"watch"`
-	Exclude []string `yaml:"exclude,omitempty"`
-	Run []string     `yaml:"run"`
-	Pass []string    `yaml:"pass,omitempty"`
-	Fail []string    `yaml:"fail,omitempty"`
-	Shell string     `yaml:"shell,omitempty"`
+	Watch   []string  `yaml:"watch"`
+	Exclude []string  `yaml:"exclude,omitempty"`
+	Command []string  `yaml:"command"`
+	Pass    []string  `yaml:"pass,omitempty"`
+	Fail    []string  `yaml:"fail,omitempty"`
+	Shell   string    `yaml:"shell,omitempty"`
 }
 
 func Unmarshal(bytes []byte) (*B, error) {
@@ -35,9 +35,22 @@ func Unmarshal(bytes []byte) (*B, error) {
 	return &b, nil
 }
 
+func errMalformed(msg string) error {
+	return fmt.Errorf("Malformed Baconfile: %s", msg)
+}
+
 func (b *B) Validate() error {
 	if len(b.Targets) == 0 {
-		return errors.New("Must supply at least one target")
+		return errMalformed("Must supply at least one target")
+	}
+
+	for tName, t := range b.Targets {
+		if len(t.Watch) == 0 {
+			return errMalformed(fmt.Sprintf("Target '%s' must supply at least one 'watch' entry", tName))
+		}
+		if len(t.Command) == 0 && len(t.Pass) == 0 && len(t.Fail) == 0 {
+			return errMalformed(fmt.Sprintf("Target '%s' must supply at least one 'command', 'pass', or 'fail' command", tName))
+		}
 	}
 
 	return nil
