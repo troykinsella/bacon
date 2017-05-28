@@ -58,29 +58,26 @@ func newExecutor(c *cli.Context) (*executor.E, error) {
 		passCmds,
 		failCmds,
 		sh,
+		"",
 		showOut,
 	)
 
 	return e, nil
 }
 
-func newExpander(c *cli.Context) (*expander.E, error) {
-	includes := c.StringSlice(watch)
-	excludes := c.StringSlice(watchExclude)
-	e := expander.New(includes, excludes)
-	return e, nil
-}
-
 func newBacon(c *cli.Context) (*Bacon, error) {
-	w, err := watcher.New(
+	exp := expander.New(
+		"",
 		c.StringSlice(watch),
 		c.StringSlice(watchExclude),
 	)
+
+	w, err := watcher.New(exp)
 	if err != nil {
 		return nil, err
 	}
 
-	e, err := newExecutor(c)
+	exec, err := newExecutor(c)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +88,7 @@ func newBacon(c *cli.Context) (*Bacon, error) {
 
 	b := NewBacon(
 		w,
-		e,
+		exec,
 		showOut,
 		!noNotify,
 		sumFmt,
@@ -104,11 +101,10 @@ func newListCommand() *cli.Command {
 		Name:  "list",
 		Usage: "Print effective files to watch given inclusion and exclusion globs and exit.",
 		Action: func(c *cli.Context) error {
-			e, err := newExpander(c)
-			if err != nil {
-				return err
-			}
+			includes := c.StringSlice(watch)
+			excludes := c.StringSlice(watchExclude)
 
+			e := expander.New("", includes, excludes)
 			list, err := e.List()
 			if err != nil {
 				return err
@@ -215,7 +211,8 @@ func newBaconForBaconfile(
 	includes := injectArgs(target.Watch, args)
 	excludes := injectArgs(target.Exclude, args)
 
-	w, err := watcher.New(includes, excludes)
+	exp := expander.New(target.Dir, includes, excludes)
+	w, err := watcher.New(exp)
 	if err != nil {
 		return nil, err
 	}
@@ -231,6 +228,7 @@ func newBaconForBaconfile(
 		passCommands,
 		failCommands,
 		target.Shell,
+		target.Dir,
 		showOut,
 	)
 	if err != nil {

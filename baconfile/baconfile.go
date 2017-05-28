@@ -15,6 +15,7 @@ type B struct {
 type Target struct {
 	Watch   []string  `yaml:"watch"`
 	Exclude []string  `yaml:"exclude,omitempty"`
+	Dir     string    `yaml:"dir,omitempty"`
 	Command []string  `yaml:"command"`
 	Pass    []string  `yaml:"pass,omitempty"`
 	Fail    []string  `yaml:"fail,omitempty"`

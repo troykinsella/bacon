@@ -15,11 +15,12 @@ type E struct {
 }
 
 func New(
+	dir string,
 	includes []string,
-	excludes []string) *E {
-
-	includes = normalizeGlobs(includes, "**/*", false)
-	excludes = normalizeGlobs(excludes, "**/.*", true)
+	excludes []string,
+) *E {
+	includes = normalizeGlobs(dir, includes, "**/*", false)
+	excludes = normalizeGlobs(dir, excludes, "**/.*", true)
 
 	return &E{
 		includes: includes,
@@ -165,21 +166,24 @@ func selected(path string, includes []string, excludes []string) (bool, error) {
 	return true, nil
 }
 
-func normalizeGlobs(globs []string, defalt string, exclude bool) []string {
+func normalizeGlobs(dir string, globs []string, defalt string, exclude bool) []string {
 	if globs == nil || len(globs) == 0 {
 		globs = []string{defalt}
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		panic(err)
+	if dir == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+		dir = cwd
 	}
 
 	for i, g := range globs {
 		if filepath.IsAbs(g) {
 			globs[i] = g
 		} else {
-			globs[i] = filepath.Join(cwd, g)
+			globs[i] = filepath.Join(dir, g)
 		}
 	}
 

@@ -11,7 +11,7 @@ import (
 const eventThrottle = 100 * time.Millisecond
 
 type W struct {
-	e         *expander.E
+	exp       *expander.E
 	changed   ChangedFunc
 	done      chan error
 	fsWatcher *fsnotify.Watcher
@@ -20,19 +20,14 @@ type W struct {
 
 type ChangedFunc func(f string)
 
-func New(
-	includes []string,
-	excludes []string) (*W, error) {
-
-	e := expander.New(includes, excludes)
-
+func New(exp *expander.E) (*W, error) {
 	fsWatcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
 	}
 
 	return &W{
-		e:         e,
+		exp:       exp,
 		done:      make(chan error),
 		fsWatcher: fsWatcher,
 		events:    make(map[string]time.Time),
@@ -45,7 +40,7 @@ func (w *W) runDispatcher() {
 			select {
 			case event := <-w.fsWatcher.Events:
 				n := extractName(event)
-				s, err := w.e.Selected(n)
+				s, err := w.exp.Selected(n)
 				if err != nil {
 					w.done <- err
 					break
@@ -104,7 +99,7 @@ func (w *W) Run(changed ChangedFunc) error {
 	defer w.fsWatcher.Close()
 	w.runDispatcher()
 
-	dirs, err := w.e.BaseDirs()
+	dirs, err := w.exp.BaseDirs()
 	if err != nil {
 		return err
 	}

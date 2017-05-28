@@ -85,7 +85,7 @@ func TestE_BaseDirs(t *testing.T) {
 		test.exc = prefix(test.exc, cwd)
 		test.exp = prefix(test.exp, cwd)
 
-		e := New(test.inc, test.exc)
+		e := New("", test.inc, test.exc)
 		dirs, err := e.BaseDirs()
 
 		if test.err == "" {
@@ -138,7 +138,7 @@ func TestE_Selected(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		e := New(test.inc, test.exc)
+		e := New("", test.inc, test.exc)
 		r, err := e.Selected(test.path)
 		if test.err == "" {
 			if err != nil {

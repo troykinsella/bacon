@@ -4,10 +4,12 @@ import (
 	"os/exec"
 	"testing"
 	"time"
+	"github.com/troykinsella/bacon/expander"
 )
 
 func TestW_Run(t *testing.T) {
-	w, err := New([]string{"testdata/foo"}, []string{})
+	exp := expander.New("", []string{"testdata/foo"}, []string{})
+	w, err := New(exp)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return

@@ -220,6 +220,7 @@ func TestE_RunCommands(t *testing.T) {
 			test.passCommands,
 			test.failCommands,
 			"",
+			"",
 			test.showOutput)
 		e.out = &outBuf
 		e.err = &outBuf

@@ -1,7 +1,7 @@
 
 PACKAGE=github.com/troykinsella/bacon
 BINARY=bacon
-VERSION=0.1.1
+VERSION=0.2.0
 
 LDFLAGS=-ldflags "-X main.AppVersion=${VERSION}"
 
@@ -14,6 +14,9 @@ install:
 test:
 	go test ${PACKAGE}/...
 
+coverage:
+	go test -cover ${PACKAGE}/...
+
 dist:
 	gox ${LDFLAGS} \
 		-arch="amd64" \
@@ -24,3 +27,5 @@ dist:
 clean:
 	test -f ${BINARY} && rm ${BINARY} || true
 	rm ${BINARY}_* || true
+
+.PHONY: build install test coverage dist release clean

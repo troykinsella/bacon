@@ -19,6 +19,7 @@ type E struct {
 	failCommands []string
 
 	shell      string
+	dir        string
 	showOutput bool
 
 	out io.Writer
@@ -40,6 +41,7 @@ func New(
 	passCommands []string,
 	failCommands []string,
 	shell string,
+	dir string,
 	showOutput bool) *E {
 
 	if shell == "" {
@@ -52,6 +54,7 @@ func New(
 		failCommands: failCommands,
 
 		shell:      shell,
+		dir:        dir,
 		showOutput: showOutput,
 
 		out: os.Stdout,
@@ -63,7 +66,9 @@ func New(
 	}
 }
 
-func (e *E) RunCommands(changed string, args []string) *Result {
+func (e *E) RunCommands(
+	changed string,
+	args []string) *Result {
 	pass := true
 
 	for _, cmd := range e.commands {
@@ -74,10 +79,12 @@ func (e *E) RunCommands(changed string, args []string) *Result {
 		}
 	}
 
-	if pass {
-		e.runPassCommands(changed, args)
-	} else {
-		e.runFailCommands(changed, args)
+	passFailCommands := e.passCommands
+	if !pass {
+		passFailCommands = e.failCommands
+	}
+	for _, cmd := range passFailCommands {
+		e.runCommand(changed, cmd, args)
 	}
 
 	e.mu.Lock()
@@ -95,30 +102,28 @@ func (e *E) RunCommands(changed string, args []string) *Result {
 	}
 }
 
-func (e *E) runPassCommands(changed string, args []string) {
-	for _, cmd := range e.passCommands {
-		e.runCommand(changed, cmd, args)
-	}
-}
-
-func (e *E) runFailCommands(changed string, args []string) {
-	for _, cmd := range e.failCommands {
-		e.runCommand(changed, cmd, args)
-	}
-}
-
-func (e *E) makeCommand(cmdStr string, args []string) *exec.Cmd {
+func (e *E) makeCommand(changed string, cmdStr string, args []string) *exec.Cmd {
 	cmd := exec.Command(e.shell, "-c", cmdStr)
-	cmd.Env = os.Environ()
-	return cmd
-}
 
-func (e *E) runCommand(changed string, str string, args []string) error {
-	args = append([]string{str}, args...)
-	cmd := e.makeCommand(str, args)
+	cmd.Env = os.Environ()
 	if changed != "" {
 		cmd.Env = append(cmd.Env, "BACON_CHANGED=" + changed)
 	}
+
+	if e.dir != "" {
+		cmd.Dir = e.dir
+	}
+
+	return cmd
+}
+
+func (e *E) runCommand(
+	changed string,
+	str string,
+	args []string,
+) error {
+	args = append([]string{str}, args...)
+	cmd := e.makeCommand(changed, str, args)
 
 	var outBuf bytes.Buffer
 	var errBuf bytes.Buffer

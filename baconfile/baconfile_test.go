@@ -18,6 +18,11 @@ func TestUnmarshal(t *testing.T) {
 			"Malformed Baconfile: Must supply at least one target",
 		},
 		{
+			`--- { target: {} }`,
+			nil,
+			"Malformed Baconfile: Must supply at least one target",
+		},
+		{
 			`--- { target: { foo: { watch: [bar], command: [echo] } } }`,
 			&baconfile.B{
 				Targets: map[string]*baconfile.Target{
