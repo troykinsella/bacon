@@ -171,12 +171,15 @@ func normalizeGlobs(dir string, globs []string, defalt string, exclude bool) []s
 		globs = []string{defalt}
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
 	if dir == "" {
-		cwd, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
 		dir = cwd
+	} else if !filepath.IsAbs(dir) {
+		dir = filepath.Join(cwd, dir)
 	}
 
 	for i, g := range globs {
