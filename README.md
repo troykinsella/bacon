@@ -19,12 +19,9 @@ A tool to watch files for changes and continuously react by running commands.
     1. [On-Failure Commands](#on-failure-commands)
     1. [Command Arguments](#command-arguments)
     1. [Watch Files](#watch-files)
-        1. [Includes](#includes)
-        1. [Excludes](#excludes)
     1. [Baconfile](#baconfile)
 1. [Output](#output)
-    1. [Command Summary Line](#command-summary-line)
-        1. [Custom Summary Line](#custom-summary-line)
+    1. [Command Status Line](#command-status-line)
     1. [Status Notifications](#status-notifications)
 1. [Troubleshooting](#troubleshooting)
 1. [Road Map](#road-map)
@@ -72,6 +69,15 @@ waiting for a watched file to change.
 
 Here.
 ```bash
+# Load a Baconfile and run the default target.
+bacon run
+
+# Load a Baconfile and run a specific target.
+bacon run other-files
+
+# Generate a Baconfile by asking you questions.
+bacon init
+
 # Watch files matching **/* in the CWD, except for files in **/.*,
 # and run a script when any of them change.
 bacon -c ./run-me.sh
@@ -95,7 +101,7 @@ bacon -w '**/*.sh' \
 bacon -c check-syntax.sh \
       -c find-bugs.sh \
       -p notfiy-tom-vogel-of-great-success.sh \
-      -f notify-tom-vogel-of-great-failure.sh
+      -f notify-tom-vogel-of-terrible-failure.sh
 
 # Use long options for readability.
 bacon --watch '**/*.sh' \
@@ -108,7 +114,7 @@ bacon list -w '**/*.rb' \
            -e '**/naughty'
 
 # Execute the given commands once, as bacon would after a watched file change,
-# then exit.
+# then exit. Useful for troubleshooting bacon configuration.
 bacon command -c ./unit-tests.sh \
               -c ./int-tests.sh \
               -p ./celebrate.sh
@@ -126,8 +132,9 @@ Command     | Description
 ----------- | -----------
 `<omitted>` | Watch a set of files, and run the given shell commands when they change.
 `command`   | Execute the given shell commands as `bacon` would when watching files, and exit.
+`init`      | Generate a `Baconfile` by asking you questions.
 `list`      | Print a list of files matched by the given inclusion and exclusion glob expressions, and exit.
-`run`       | Load a Baconfile and run a target, which specifies a set of files to watch, and commands to run when they change.
+`run`       | Load a `Baconfile` and run a target, which specifies a set of files to watch, and commands to run when they change.
 
 Run `bacon -h` for comprehensive usage.
 
@@ -185,7 +192,7 @@ running `bacon` or when using `bacon command`, `$BACON_CHANGED` is substituted w
 Files can be watched for changes. "Change", specifically,
 means: When a file is written to. Creation and deletion changes are ignored.
 
-Files are selected for watching using extended glob syntax (having support for **).
+Files are selected for watching using extended glob syntax (having support for `**`).
 See the [bmatcuk/doublestar](https://github.com/bmatcuk/doublestar) documentation for glob syntax.
 `bacon` does not follow symlinks in resolving matches. Globs that do not start with `/` are
 considered relative to the CWD.
@@ -228,10 +235,19 @@ bacon -e "exclude-me/**" \
 
 ### Baconfile
 
-The `bacon run` command loads a `Baconfile` to find instructions for which files to watch
-and what commands to execute. A `Baconfile` contains "targets" which are configuration profiles.
+A `Baconfile` is a YAML file that defines configuration for which files to watch
+and which commands to execute when files change. It contains `targets` which are 
+configuration profiles. Using `targets`, you can capture multiple configurations 
+in one `Baconfile` and select the desired configuration when you run `bacon`.
 
-If a `Baconfile` is not specified with the `-b` option, `bacon` searches for one in this order:
+Run `bacon init` to generate a `Baconfile` by asking you questions.
+
+#### Running `bacon` with a `Baconfile`
+
+The `bacon run` command loads a `Baconfile` to find configuration
+rather than requiring you to pass arguments, such as `-w` and `-c`.
+If a `Baconfile` is not specified with the `-b` option, `bacon` 
+searches for one in the current working directory in this order:
 
 * `Baconfile`
 * `Baconfile.yml`
@@ -240,32 +256,61 @@ If a `Baconfile` is not specified with the `-b` option, `bacon` searches for one
 * `.Baconfile.yml`
 * `.Baconfile.yaml`
 
-`Baconfile` format:
+The "default" `target` is special in that it is loaded when a target name is not
+supplied to the `bacon run [target]` command, otherwise the specified
+`target` is loaded.
+
+#### Baconfile Fields
+
+A `Baconfile` has two fields at its root:
+
+* `version`: Optional. The version of the `Baconfile` specification used. 
+  Currently only `1.0` is supported.
+* `targets`: Required. A list of target objects.
+
+A `target` object defines a single configuration for how `bacon` should
+watch files and run things for you. It allows these fields:
+
+* `dir`: Optional. The working directory on which `watch` and `exclude` patterns are 
+  rooted, and on which `command`, `pass`, and `fail` commands are executed. Defaults
+  to the working directory in which you run `bacon`. Can be a relative or absolute path.
+* `watch`: At least one entry required. A list of glob patterns to watch for changes. 
+  Equivalent to the `-w` argument.
+* `exclude`: Optional. A list of glob patterns to exclude from the `watch` matches.
+  Equivalent to the `-e` argument.
+* `command`: At least one entry required. A list of commands to execute whenever files change.
+  Equivalent to the `-c` argument.
+* `pass`: Optional. A list of commands to execute only if the `command` list succeeds.
+  Equivalent to the `-p` argument.
+* `fail`: Optional. A list of commands to execute only if any of the `command` list fails.
+  Equivalent to the `-f` argument.
+
+#### Baconfile Example
 
 ```yaml
 ---
+version: "1.0"
 targets:
-  target:
+  target_name:
+    dir: "some/cwd"
     watch: [ "some/files/**" ]
-    command: [ "echo run always", "test.sh" ]
-    pass: [ "echo passed" ]
-    fail: [ "echo failed" ]
+    exclude: [ "some/files/*.not_me" ]
+    command: [ "make test", "make something-else" ]
+    pass: [ "celebrate.sh" ]
+    fail: [ "eat-a-bucket-of-ice-cream.sh" ]
 ```
-
-The `default` target is special in that it is loaded when a target name is not
-supplied to the `bacon run [target]` command.
 
 ## Output
 
-By default, `bacon` only prints summary lines, clearing the screen in between command executions
+By default, `bacon` only prints status lines, clearing the screen in between command executions
 to hide clutter. But, if you pass it `-o, --show-output`, it will print all command output continuously.
 Regardless of this option, if an execution fails, the output and error streams of the failing
 command are printed to `bacon`'s standard error.
 
-### Command Summary Line
+### Command Status Line
 
 Since it takes more than a single glance to figure out from the command output if 
-commands have passed or failed, `bacon` prints an ansii-coloured summary line after
+commands have passed or failed, `bacon` prints an ansii-coloured status line after
 executions.
 
 When commands start executing, `bacon` prints this:
@@ -282,29 +327,6 @@ Or, if any command fails:
 ```
 [19:37:13] ✗ Failed
 ```
-
-#### Custom Summary Line
-
-`bacon` uses [Go lang templating](https://golang.org/pkg/text/template/)
-to format the summary line. The default template is:
-```
-[{{ .timeStamp }}] {{ .colorStart }}{{ .statusSymbol }} {{ .status }}{{ .colorEnd }}
-```
-
-Use the `--summary-format` option to customize the summary line.
-
-The following variables are available to the template:
-
-Name           | Description
--------------- | -----------
-`changedDir`   | The absolute path to the directory containing the `changedFile`.
-`changedFile`  | The absolute path to the file that was changed to trigger the command execution, if any.
-`colorEnd`     | Terminates a started ansii color string.
-`colorStart`   | An opening ansii color code string that reflects the passing status. i.e. Green (passed), yellow (running), or red (failed).
-`duration`     | A string representing how long the command sequence took to execute.
-`status`       | One of "Running", "Passed", or "Failed".
-`statusSymbol` | One of "→" (for running), "✓" (for passed), or "✗" (for failed).
-`timeStamp`    | A current timestamp in the format: "h:m:s".
 
 ### Status Notifications
 
@@ -342,10 +364,6 @@ Refer to this documentation to see if notifications are supported on your operat
 
 The commands you're running are potentially modifying files, causing and endless execution loop.
 Stop it. In the future `bacon` will detect endless build loops.
-
-### Typing out all these options sucks! wtf fml
-
-Make a shell script!
 
 ## Road Map
 
