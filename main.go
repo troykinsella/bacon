@@ -12,6 +12,8 @@ import (
 	"io/ioutil"
 	"github.com/troykinsella/bacon/util"
 	"strings"
+	"bufio"
+	"path/filepath"
 )
 
 const (
@@ -32,7 +34,6 @@ const (
 	showOutput       = "o"
 	showOutputLong   = showOutput + ", show-output"
 	noNotify         = "no-notify"
-	summaryFormat    = "summary-format"
 	shell            = "shell"
 
 	defaultTarget    = "default"
@@ -84,14 +85,12 @@ func newBacon(c *cli.Context) (*Bacon, error) {
 
 	showOut := c.Bool(showOutput)
 	noNotify := c.Bool(noNotify)
-	sumFmt := c.String(summaryFormat)
 
 	b := NewBacon(
 		w,
 		exec,
 		showOut,
 		!noNotify,
-		sumFmt,
 	)
 	return b, nil
 }
@@ -116,6 +115,142 @@ func newListCommand() *cli.Command {
 			return nil
 		},
 		Flags: newWatchFlags(),
+	}
+}
+
+func readString(in *bufio.Scanner, msg string, def string) string {
+	if def == "" {
+		fmt.Printf("%s: ", msg)
+	} else {
+		fmt.Printf("%s [%s]: ", msg, def)
+	}
+	in.Scan()
+	t := in.Text()
+	if t == "" {
+		t = def
+	}
+	return t
+}
+
+func readStringSlice(in *bufio.Scanner, msg string, def string, requireOne bool) []string {
+	result := []string{}
+	i := 0
+	for {
+		d := def
+		if i > 0 {
+			d = ""
+		}
+
+		s := readString(in, msg, d)
+		if s == "" && requireOne {
+			fmt.Println("At least one value is required")
+			continue
+		}
+
+		if s == "" {
+			break
+		}
+
+		result = append(result, s)
+
+		if !readYesNo(in, "↪ Another list entry?", false) {
+			break
+		}
+
+		i = i + 1
+	}
+
+	return result
+}
+
+func readYesNo(in *bufio.Scanner, msg string, def bool) bool {
+	var defStr string
+	if def {
+		defStr = "Yn"
+	} else {
+		defStr = "yN"
+	}
+	fmt.Printf("%s [%s]: ", msg, defStr)
+	in.Scan()
+	t := in.Text()
+	if t == "" {
+		return def
+	}
+	return t == "y" || t == "Y"
+}
+
+func newInitCommand() *cli.Command {
+	return &cli.Command{
+		Name: "init",
+		Usage: "Create a Baconfile by asking you questions.",
+		Action: func(c *cli.Context) error {
+			in := bufio.NewScanner(os.Stdin)
+
+			targets := make(map[string]*baconfile.Target)
+
+			for {
+				var tName string
+				for {
+					tName = readString(in, "Target name", "default")
+					if _, exists := targets[tName]; exists {
+						fmt.Println("Already entered this target name. Enter a different name.")
+						continue
+					}
+					break
+				}
+
+				dir := readString(in, "Working directory for patterns and commands", "")
+				watch := readStringSlice(in, "Watch file pattern list", "**/*", true)
+				cmd := readStringSlice(in, "Command list to run when files change", "", true)
+				pass := readStringSlice(in, "Execute list when the commands pass", "", false)
+				fail := readStringSlice(in, "Execute list when the commands fail", "", false)
+
+				t := &baconfile.Target{
+					Dir: dir,
+					Watch: watch,
+					Command: cmd,
+					Pass: pass,
+					Fail: fail,
+				}
+
+				targets[tName] = t
+
+				if !readYesNo(in, "Create another target?", false) {
+					break
+				}
+			}
+
+			bf := baconfile.B{
+				Targets: targets,
+			}
+
+			bytes, err := bf.Marshal()
+			if err != nil {
+				return err
+			}
+
+			if readYesNo(in, "View Baconfile preview?", false) {
+				fmt.Print(string(bytes))
+			}
+
+			out := readString(in, "Baconfile path", "Baconfile")
+			if !filepath.IsAbs(out) {
+				cwd, err := os.Getwd()
+				if err != nil {
+					return err
+				}
+				out = filepath.Join(cwd, out)
+			}
+
+			if readYesNo(in, "Write Baconfile to " + out + "?", true) {
+				err := ioutil.WriteFile(out, bytes, 0644)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
 	}
 }
 
@@ -236,14 +371,12 @@ func newBaconForBaconfile(
 	}
 
 	noNotify := c.GlobalBool(noNotify)
-	sumFmt := c.GlobalString(summaryFormat)
 
 	b := NewBacon(
 		w,
 		e,
 		showOut,
 		!noNotify,
-		sumFmt,
 	)
 	return b, nil
 }
@@ -306,6 +439,7 @@ func defCommands(app *cli.App) {
 	app.Commands = []cli.Command{
 		*newCommandCommand(),
 		*newListCommand(),
+		*newInitCommand(),
 		*newRunCommand(),
 	}
 }
@@ -370,10 +504,6 @@ func newCliApp() *cli.App {
 			Name:  noNotify,
 			Usage: "Disable system notifications",
 		},
-		cli.StringFlag{
-			Name:  summaryFormat,
-			Usage: "Go template string for custom summary lines",
-		},
 	}
 
 	app.Flags = append(app.Flags, newWatchFlags()...)
@@ -383,11 +513,6 @@ func newCliApp() *cli.App {
 }
 
 func main() {
-	cli.VersionFlag = cli.BoolFlag{
-		Name:  "V, version",
-		Usage: "print the version",
-	}
-
 	app := newCliApp()
 	err := app.Run(os.Args)
 	if err != nil {

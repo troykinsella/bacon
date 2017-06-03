@@ -7,13 +7,14 @@ import (
 	"github.com/troykinsella/bacon/util"
 	"github.com/troykinsella/bacon/watcher"
 	"os"
-	"path/filepath"
 	"text/template"
 	"time"
+	"strconv"
 )
 
 const (
-	defaultSummaryFormat = "[{{ .timeStamp }}] {{ .colorStart }}{{ .statusSymbol }} {{ .status }}{{ .colorEnd }}"
+	outputStatusFormat = "[{{ .timeStamp }}] {{ .colorStart }}{{ .statusSymbol }} {{ .status }}{{ .colorEnd }}"
+	noOutputStatusFormat = "[{{ .timeSince }}] {{ .colorStart }}{{ .statusSymbol }} {{ .status }}{{ .colorEnd }}"
 
 	statusRunning   = "Running"
 	statusPassed    = "Passed"
@@ -26,36 +27,60 @@ const (
 )
 
 type Bacon struct {
-	w *watcher.W
-	e *executor.E
+	w          *watcher.W
+	e          *executor.E
 
 	showOutput bool
 	notify     bool
-	summaryFmt string
+	statusChan chan *status
+	n          *notificator.Notificator
+}
 
-	n *notificator.Notificator
+type status struct {
+	t time.Time
+	running bool
+	passing bool
 }
 
 func NewBacon(
 	w *watcher.W,
 	e *executor.E,
 	showOutput bool,
-	notify bool,
-	summaryFmt string) *Bacon {
+	notify bool) *Bacon {
 
-	if summaryFmt == "" {
-		summaryFmt = defaultSummaryFormat
-	}
+	statusChan := make(chan *status)
 
-	return &Bacon{
+	b := &Bacon{
 		w: w,
 		e: e,
 
 		showOutput: showOutput,
 		notify:     notify,
-		summaryFmt: summaryFmt,
 
-		n: newNotificator(),
+		statusChan: statusChan,
+		n:          newNotificator(),
+	}
+
+	go b.statusPrinter()
+
+	return b
+}
+
+func (b *Bacon) statusPrinter() {
+
+	var lastStatus *status
+
+	for {
+		select {
+		case s := <- b.statusChan:
+			lastStatus = s
+			b.printStatus(s, false)
+
+		case <- time.After(time.Second):
+			if !b.showOutput {
+				b.printStatus(lastStatus, true)
+			}
+		}
 	}
 }
 
@@ -67,16 +92,18 @@ func newNotificator() *notificator.Notificator {
 
 func (b *Bacon) Run() error {
 	return b.w.Run(func(f string) {
-		b.cls()
-		b.printSummary(nil, f, nil)
-
-		start := time.Now()
-		r := b.e.RunCommands(f, nil)
-		if r.Passing {
-			b.cls()
+		b.statusChan <- &status{
+			t: time.Now(),
+			running: true,
 		}
 
-		b.printSummary(&start, f, r)
+		r := b.e.RunCommands(f, nil)
+
+		b.statusChan <- &status{
+			t: r.FinishedAt,
+			passing: r.Passing,
+		}
+
 		b.pushNotification(r)
 	})
 }
@@ -87,32 +114,48 @@ func (b *Bacon) cls() {
 	}
 }
 
-func (b *Bacon) printSummary(start *time.Time, changed string, r *executor.Result) {
-	tpl, err := template.New("summary").Parse(b.summaryFmt + "\n")
+func (b *Bacon) printStatus(s *status, repaint bool) {
+
+	statusFmt := outputStatusFormat
+	if !b.showOutput {
+		statusFmt = noOutputStatusFormat
+	}
+
+	tpl, err := template.New("status").Parse(statusFmt + "\n")
 	if err != nil {
 		panic(err)
 	}
 
-	vars := summaryVars(start, changed, r)
+	vars := b.statusVars(s)
+
+	if s.running || s.passing {
+		b.cls()
+	}
+
+	if !b.showOutput && repaint {
+		fmt.Print("\033[1A")
+	}
+
 	tpl.Execute(os.Stdout, vars)
 }
 
-func summaryVars(start *time.Time, changedFile string, r *executor.Result) map[string]string {
+func (b *Bacon) statusVars(s *status) map[string]string {
 
-	end := time.Now()
+	now := time.Now()
 
-	var changedDir string
 	var status string
 	var statusSymbol string
 	var colorStart string
-	var duration string
+	var timeStamp string
 
-	if r == nil {
+	if s.running {
 		status = statusRunning
 		statusSymbol = symbolRunning
 		colorStart = "\033[33m"
+		timeStamp = now.Format("15:04:05")
+
 	} else {
-		if r.Passing {
+		if s.passing {
 			status = statusPassed
 			statusSymbol = symbolPassed
 			colorStart = "\033[32m"
@@ -122,23 +165,37 @@ func summaryVars(start *time.Time, changedFile string, r *executor.Result) map[s
 			colorStart = "\033[31m"
 		}
 
-		duration = end.Sub(*start).String()
-	}
-
-	if changedFile != "" {
-		changedDir = filepath.Dir(changedFile)
+		timeStamp = s.t.Format("15:04:05")
 	}
 
 	return map[string]string{
-		"changedDir":   changedDir,
-		"changedFile":  changedFile,
+		"showOutput":   strconv.FormatBool(b.showOutput),
 		"status":       status,
 		"statusSymbol": statusSymbol,
 		"colorStart":   colorStart,
 		"colorEnd":     "\033[0m",
-		"timeStamp":    end.Format("15:04:05"),
-		"duration":     duration,
+		"timeStamp":    timeStamp,
+		"timeSince":    round(now.Sub(s.t), time.Second).String(),
 	}
+}
+
+func round(d, r time.Duration) time.Duration {
+	if r <= 0 {
+		return d
+	}
+	neg := d < 0
+	if neg {
+		d = -d
+	}
+	if m := d % r; m+m < r {
+		d = d - m
+	} else {
+		d = d + r - m
+	}
+	if neg {
+		return -d
+	}
+	return d
 }
 
 func (b *Bacon) pushNotification(r *executor.Result) {

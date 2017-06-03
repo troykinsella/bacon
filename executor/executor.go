@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 )
 
 const (
@@ -34,6 +35,8 @@ type Result struct {
 	Passing    bool
 	WasPassing bool
 	First      bool
+	Duration   time.Duration
+	FinishedAt time.Time
 }
 
 func New(
@@ -69,6 +72,8 @@ func New(
 func (e *E) RunCommands(
 	changed string,
 	args []string) *Result {
+
+	start := time.Now()
 	pass := true
 
 	for _, cmd := range e.commands {
@@ -87,6 +92,9 @@ func (e *E) RunCommands(
 		e.runCommand(changed, cmd, args)
 	}
 
+	end := time.Now()
+	duration := end.Sub(start)
+
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -99,6 +107,8 @@ func (e *E) RunCommands(
 		Passing:    pass,
 		WasPassing: wasPassing,
 		First:      first,
+		Duration:   duration,
+		FinishedAt: end,
 	}
 }
 

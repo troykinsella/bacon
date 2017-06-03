@@ -62,6 +62,10 @@ func (b *B) Marshal() ([]byte, error) {
 		return nil, err
 	}
 
+	if b.Version == "" {
+		b.Version = Version
+	}
+
 	out, err := yaml.Marshal(b)
 	if err != nil {
 		return nil, err
