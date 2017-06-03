@@ -2,8 +2,8 @@ package executor
 
 import (
 	"bytes"
-	"reflect"
 	"testing"
+	"time"
 )
 
 func TestE_RunCommands(t *testing.T) {
@@ -24,7 +24,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			false,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"",
 		},
 		{ // Show output when enabled
@@ -33,7 +33,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			true,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"foo\n",
 		},
 		{ // Multiple commands
@@ -42,7 +42,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			true,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"foo\nbar\n",
 		},
 		{ // Show error when output disabled
@@ -51,7 +51,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			false,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"foo\n",
 		},
 		{ // Show error when output enabled
@@ -60,7 +60,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			true,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"foo\n",
 		},
 		{ // Show output and error when output enabled
@@ -69,7 +69,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			true,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"foo\nbar\n",
 		},
 		{ // Output comes before error
@@ -78,7 +78,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			true,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"foo\nbaz\nbar\n",
 		},
 
@@ -89,7 +89,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			false,
 			[]string{},
-			&Result{false, true, true},
+			&Result{false, true, true, 0, time.Time{}},
 			"",
 		},
 		{ // Show output as error on failures
@@ -98,7 +98,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			false,
 			[]string{},
-			&Result{false, true, true},
+			&Result{false, true, true, 0, time.Time{}},
 			"foo\n",
 		},
 		{ // Show error as error on failures
@@ -107,7 +107,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			false,
 			[]string{},
-			&Result{false, true, true},
+			&Result{false, true, true, 0, time.Time{}},
 			"foo\n",
 		},
 		{ // Show output and error as error on failures
@@ -116,7 +116,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{},
 			false,
 			[]string{},
-			&Result{false, true, true},
+			&Result{false, true, true, 0, time.Time{}},
 			"foo\nbar\n",
 		},
 
@@ -127,7 +127,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{"echo no"},
 			true,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"foo\nyes\n",
 		},
 		{ // Run fail commands on failure
@@ -136,7 +136,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{"echo no"},
 			true,
 			[]string{},
-			&Result{false, true, true},
+			&Result{false, true, true, 0, time.Time{}},
 			"foo\nno\n",
 		},
 		{ // Multiple pass commands
@@ -145,7 +145,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{"echo no"},
 			true,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"foo\nyes\nagain\n",
 		},
 		{ // Multiple fail commands
@@ -154,7 +154,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{"echo no", "echo again"},
 			true,
 			[]string{},
-			&Result{false, true, true},
+			&Result{false, true, true, 0, time.Time{}},
 			"foo\nno\nagain\n",
 		},
 		{ // Pass command failure doesn't influence overall result
@@ -163,7 +163,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{"echo no"},
 			true,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"foo\nyes\n",
 		},
 		{ // Fail command failure doesn't.. uh.. magically make the overall result success?
@@ -172,7 +172,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{"echo no; exit 1"},
 			true,
 			[]string{},
-			&Result{false, true, true},
+			&Result{false, true, true, 0, time.Time{}},
 			"foo\nno\n",
 		},
 		{ // Pass command doesn't output when output disabled
@@ -181,7 +181,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{"echo no"},
 			false,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"",
 		},
 		{ // Pass command errors output when output disabled
@@ -190,7 +190,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{"echo no"},
 			false,
 			[]string{},
-			&Result{true, true, true},
+			&Result{true, true, true, 0, time.Time{}},
 			"yes\n",
 		},
 		{ // Fail command doesn't output when output disabled
@@ -199,7 +199,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{"echo no"},
 			false,
 			[]string{},
-			&Result{false, true, true},
+			&Result{false, true, true, 0, time.Time{}},
 			"foo\n",
 		},
 		{ // Fail command shows error when output disabled
@@ -208,7 +208,7 @@ func TestE_RunCommands(t *testing.T) {
 			[]string{"echo no 1>&2"},
 			false,
 			[]string{},
-			&Result{false, true, true},
+			&Result{false, true, true, 0, time.Time{}},
 			"foo\nno\n",
 		},
 	}
@@ -228,11 +228,25 @@ func TestE_RunCommands(t *testing.T) {
 		r := e.RunCommands("", test.args)
 		outStr := outBuf.String()
 
-		if !reflect.DeepEqual(r, test.expectedResult) {
+		if !resultsEqual(r, test.expectedResult) {
 			t.Errorf("%d. unexpected result:\nexpected=%#v,\nactual=%#v\n", i, test.expectedResult, r)
 		}
 		if outStr != test.expectedOutput {
 			t.Errorf("%d. unexpected output/error:\nexpected=%#v,\nactual=%#v\n", i, test.expectedOutput, outStr)
 		}
 	}
+}
+
+func resultsEqual(actual *Result, expected *Result) bool {
+	if actual.First != expected.First {
+		return false
+	}
+	if actual.Passing != expected.Passing {
+		return false
+	}
+	if actual.WasPassing != expected.WasPassing {
+		return false
+	}
+	// Ignore times and durations
+	return true
 }
