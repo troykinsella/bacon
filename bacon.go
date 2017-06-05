@@ -133,7 +133,7 @@ func (b *Bacon) printStatus(s *status, repaint bool) {
 	}
 
 	if !b.showOutput && repaint {
-		fmt.Print("\033[1A")
+		fmt.Print("\033[1A                                \033[1A")
 	}
 
 	tpl.Execute(os.Stdout, vars)
