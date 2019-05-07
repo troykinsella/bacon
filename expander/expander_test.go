@@ -144,7 +144,7 @@ func TestE_Selected(t *testing.T) {
 			if err != nil {
 				t.Errorf("%d. \"%s\" unexpected error: %s\n", i, test.path, err.Error())
 			} else if r != test.exp {
-				t.Errorf("%d. \"%s\" unexpected result:\nexpected=%s,\nactual=%s\n", i, test.path, test.exp, r)
+				t.Errorf("%d. \"%s\" unexpected result:\nexpected=%t,\nactual=%t\n", i, test.path, test.exp, r)
 			}
 		} else {
 			if err == nil {

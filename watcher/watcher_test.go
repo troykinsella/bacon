@@ -1,10 +1,10 @@
 package watcher
 
 import (
+	"github.com/troykinsella/bacon/expander"
 	"os/exec"
 	"testing"
 	"time"
-	"github.com/troykinsella/bacon/expander"
 )
 
 func TestW_Run(t *testing.T) {
@@ -43,7 +43,7 @@ func TestW_Run(t *testing.T) {
 		select {
 		case <-done:
 			t.Error("Called back twice")
-		case <-time.After(eventThrottle):
+		case <-time.After(1 * time.Second):
 		}
 	case <-time.After(1 * time.Second):
 		t.Error("Watch callback timed out")

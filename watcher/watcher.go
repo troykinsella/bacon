@@ -4,18 +4,16 @@ import (
 	"errors"
 	"github.com/troykinsella/bacon/expander"
 	"gopkg.in/fsnotify.v1"
-	"strings"
+	"os"
 	"time"
 )
-
-const eventThrottle = 100 * time.Millisecond
 
 type W struct {
 	exp       *expander.E
 	changed   ChangedFunc
 	done      chan error
 	fsWatcher *fsnotify.Watcher
-	events    map[string]time.Time
+	lastMods  map[string]time.Time
 }
 
 type ChangedFunc func(f string)
@@ -30,34 +28,55 @@ func New(exp *expander.E) (*W, error) {
 		exp:       exp,
 		done:      make(chan error),
 		fsWatcher: fsWatcher,
-		events:    make(map[string]time.Time),
+		lastMods:  make(map[string]time.Time),
 	}, nil
 }
 
-func (w *W) runDispatcher() {
-	go func() {
-		for {
-			select {
-			case event := <-w.fsWatcher.Events:
-				n := extractName(event)
-				s, err := w.exp.Selected(n)
-				if err != nil {
-					w.done <- err
-					break
-				}
-				if !s {
-					continue
-				}
+func (w *W) acceptEvent(path string) (bool, error) {
+	s, err := w.exp.Selected(path)
+	if err != nil {
+		return false, err
+	}
+	if !s {
+		return false, nil
+	}
 
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					w.handleChange(n)
-				}
-			case err := <-w.fsWatcher.Errors:
+	stat, err := os.Stat(path)
+	if err != nil {
+		delete(w.lastMods, path)
+		return false, nil // ignore
+	}
+
+	lastMod, ok := w.lastMods[path]
+	curMod := stat.ModTime()
+	w.lastMods[path] = curMod
+	if ok && lastMod == curMod {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (w *W) changeWatcher() {
+	for {
+		select {
+		case event := <-w.fsWatcher.Events:
+			ok, err := w.acceptEvent(event.Name)
+			if err != nil {
 				w.done <- err
 				break
 			}
+			if !ok {
+				continue
+			}
+
+			go w.changed(event.Name)
+
+		case err := <-w.fsWatcher.Errors:
+			w.done <- err
+			break
 		}
-	}()
+	}
 }
 
 func (w *W) watchPaths(paths []string) error {
@@ -80,24 +99,10 @@ func (w *W) unwatchPath(path string) error {
 	return err
 }
 
-func extractName(e fsnotify.Event) string {
-	n := e.Name
-
-	// Lame-ass JetBrains hack: remove a "___jb_tmp___" suffix
-	const sfx = "___jb_tmp___"
-	if strings.HasSuffix(n, sfx) {
-		n = n[0 : len(n)-len(sfx)]
-	}
-
-	// ___jb_old___ too?
-
-	return n
-}
-
 func (w *W) Run(changed ChangedFunc) error {
 	w.changed = changed
 	defer w.fsWatcher.Close()
-	w.runDispatcher()
+	go w.changeWatcher()
 
 	dirs, err := w.exp.BaseDirs()
 	if err != nil {
@@ -111,14 +116,4 @@ func (w *W) Run(changed ChangedFunc) error {
 	w.changed("") // don't wait for a change
 
 	return <-w.done
-}
-
-func (w *W) handleChange(f string) {
-	last := w.events[f]
-	if !last.IsZero() && time.Now().Sub(last) < eventThrottle {
-		return
-	}
-
-	w.events[f] = time.Now()
-	w.changed(f)
 }

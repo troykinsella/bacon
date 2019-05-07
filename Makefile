@@ -1,7 +1,7 @@
 
 PACKAGE=github.com/troykinsella/bacon
 BINARY=bacon
-VERSION=0.3.1
+VERSION=0.4.0
 
 LDFLAGS=-ldflags "-X main.AppVersion=${VERSION}"
 
