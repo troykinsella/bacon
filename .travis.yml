@@ -1,6 +1,6 @@
 language: go
 go:
-- tip
+- "1.12.4"
 install:
 - go get github.com/mitchellh/gox
 - go get -d -v ./...
@@ -12,7 +12,7 @@ before_deploy:
 deploy:
   provider: releases
   api_key:
-    secure: NQ2ZPCqN+txANOi/chjFsbdqbjMWZfNrBPd2jtRL7qEeI56JbyDQ/DwieL+Ssvw9uTSX3c91D84I+VyPecBwU8Nhr0/DTtlNSV4PVyjO5X1ap9YaRVIXF3E7Frm7hs/e0rnOgGpfJ2brCC1xQhrI//Mj8mNwlWDZqd4nkCBv5V2yfuxlFIApggooBDVYv683c6lHQj4xY8LwFU34B/IH5UOccXXGskh9anFEYZl1RqLO3pm5sC5gj77l4MtRxllX9f41xUSkv6W8cXFWLAe0v+0q/ZN4EVMA2aCkM7ca2Tp13HDYmhr9KY2pUG8MrIHrd5bgjNyQ0Dqn9uUitq9h981xcYM9TjQx0uzL9fGgNzSyJ9UXnKcJueE8+vG06eKiEheuT3WyACKO9+XgSCuxCoOK4IpXTJ+TLDp6al+IF59d/ViROfMWZcHKmHxOdBPW5tJ/18UwS9gPyAYjyCwgRxNzjNIPoXHYUeiMku4k/cBOHZBTW1Rdi5wjE66P+4E8NvgaNB5in1++e/gTLxuAyA0Zr1H0c4c9AZlkvf7f0debL0Crnj1z+NH4LyoLD114+HbRm1hCTvts5lOC2b+bhcs43Yah1dcxYPN/CVzOiPU6lyQyvLVJ0Bm2OLIFH/39Wt/r43ObGe84CXQTLnstpPRwQPBLNxr43KsyOwOQAes=
+    secure: KYX3F+JQjn79APIcGnQQeovBTmUil/btNFAkif9Zf1XJDGyCkVKgxqAaJi/PDOvpWj4c2h6sV20KDYmEs0i6+I6Cjf1QNitSxkVaVQGrLSsaiivWXR5fsoCgxIgwSOQ3Yjw+AOQBFJU3a0yveu0PuvdybLDX6Frs1CfruhH80wq/ObhAjbk1SbyBD7On/+yRk5uWAALu/AeOcr6tYRzhCiu3w7D1Mtf1qnFPPXDuXFwlugnx2xyz6dgHJyRRoZ0xRgqfzKs1SsJ7s9yRGZrw32uWHYIpQOKN0jwUA78ltkpJphSSde6QsSO9SwwAeEAnckWqWtXeNLRgRtF3sD2COwGIbs5xGuX6cFki8YlqRSY3LZodZ+odsMUr3QXx0O/tY+kaEcnPVhPfekuJ3vl1uLSTYOFL1ghSoLgjuvzm02qV2MfTIwajL5CD6hs7mRgC7tdwclGnAW3PEhW6K1OU4AB/qvC4fC++hQ/eK4+348hiha1nkK0zJa8GLUyGqvXJzqlvvwtkCMAjhEzWVjZ+oZ7bo6bX4UwWbLpFF996xe4D9vIyYayZxU3MscAJxEpldQAK6rOaLlOAExWaRDPXMhnEIl9wjAoRTbI5p+7cSZY+o7KISRx+MhP0lTp9lBhXFm8kV6EzznVI2uqPyvucnKhDhcFkYglNtQTTw/VUdjk=
   file:
     - bacon_darwin_amd64
     - bacon_linux_amd64
@@ -22,4 +22,4 @@ deploy:
   on:
     repo: troykinsella/bacon
     tags: true
-    go: tip
+    go: "1.12.4"
