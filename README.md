@@ -41,6 +41,13 @@ A tool to watch files for changes and continuously react by running commands.
 Checkout [releases](https://github.com/troykinsella/bacon/releases) and download the appropriate binary for your system.
 Put the binary in a convenient place, such as `/usr/local/bin/bacon`.
 
+Or, run the handy dandy install script:
+(Note: go read the script and understand what you're running before trusting it)
+```bash
+export PREFIX=~ # install into ~/bin
+wget -q -O - https://raw.githubusercontent.com/troykinsella/bacon/master/install.sh | bash
+```
+
 Or, run these commands to download and install:
 ```bash
 VERSION=0.4.0
