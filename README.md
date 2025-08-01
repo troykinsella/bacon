@@ -3,7 +3,7 @@
 
 [![Version](https://badge.fury.io/gh/troykinsella%2Fbacon.svg)](https://badge.fury.io/gh/troykinsella%2Fbacon)
 [![License](https://img.shields.io/github/license/troykinsella/bacon.svg)](https://github.com/troykinsella/bacon/blob/master/LICENSE)
-[![Build Status](https://travis-ci.org/troykinsella/bacon.svg?branch=master)](https://travis-ci.org/troykinsella/bacon)
+[![Build Status](https://github.com/troykinsella/bacon/actions/workflows/ci.yml/badge.svg)](https://github.com/troykinsella/bacon/actions/workflows/ci.yml)
 
 A tool to watch files for changes and continuously react by running commands.
 
