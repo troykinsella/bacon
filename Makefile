@@ -26,4 +26,4 @@ clean:
 	rm ${BINARY}_* || true
 	rm sha256sum.txt || true
 
-.PHONY: build install test coverage dist release clean
+.PHONY: setup build test dist clean
