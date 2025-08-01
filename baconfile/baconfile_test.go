@@ -1,34 +1,34 @@
 package baconfile_test
 
 import (
-	"testing"
-	"reflect"
 	"github.com/troykinsella/bacon/baconfile"
+	"reflect"
+	"testing"
 )
 
 func TestUnmarshal(t *testing.T) {
 	var tests = []struct {
-		b string
+		b   string
 		exp *baconfile.B
 		err string
 	}{
 		{
 			"",
 			nil,
-			"Malformed Baconfile: Must supply at least one target",
+			"malformed Baconfile: must supply at least one target",
 		},
 		{
 			`--- { target: {} }`,
 			nil,
-			"Malformed Baconfile: Must supply at least one target",
+			"malformed Baconfile: must supply at least one target",
 		},
 		{
 			`--- { target: { foo: { watch: [bar], command: [echo] } } }`,
 			&baconfile.B{
 				Targets: map[string]*baconfile.Target{
 					"foo": {
-						Watch: []string{ "bar" },
-						Command: []string{ "echo" },
+						Watch:   []string{"bar"},
+						Command: []string{"echo"},
 					},
 				},
 			},

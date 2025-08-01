@@ -1,19 +1,18 @@
 package main
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"github.com/troykinsella/bacon/baconfile"
 	"github.com/troykinsella/bacon/executor"
 	"github.com/troykinsella/bacon/expander"
+	"github.com/troykinsella/bacon/util"
 	"github.com/troykinsella/bacon/watcher"
 	"github.com/urfave/cli"
 	"os"
-	"github.com/troykinsella/bacon/baconfile"
-	"errors"
-	"io/ioutil"
-	"github.com/troykinsella/bacon/util"
-	"strings"
-	"bufio"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -36,7 +35,7 @@ const (
 	noNotify         = "no-notify"
 	shell            = "shell"
 
-	defaultTarget    = "default"
+	defaultTarget = "default"
 )
 
 var (
@@ -55,6 +54,7 @@ func newExecutor(c *cli.Context) (*executor.E, error) {
 	showOut := c.Bool(showOutput)
 
 	e := executor.New(
+		"",
 		cmds,
 		passCmds,
 		failCmds,
@@ -133,7 +133,7 @@ func readString(in *bufio.Scanner, msg string, def string) string {
 }
 
 func readStringSlice(in *bufio.Scanner, msg string, def string, requireOne bool) []string {
-	result := []string{}
+	var result []string
 	i := 0
 	for {
 		d := def
@@ -181,7 +181,7 @@ func readYesNo(in *bufio.Scanner, msg string, def bool) bool {
 
 func newInitCommand() *cli.Command {
 	return &cli.Command{
-		Name: "init",
+		Name:  "init",
 		Usage: "Create a Baconfile by asking you questions.",
 		Action: func(c *cli.Context) error {
 			in := bufio.NewScanner(os.Stdin)
@@ -206,11 +206,11 @@ func newInitCommand() *cli.Command {
 				fail := readStringSlice(in, "Execute list when the commands fail", "", false)
 
 				t := &baconfile.Target{
-					Dir: dir,
-					Watch: watch,
+					Dir:     dir,
+					Watch:   watch,
 					Command: cmd,
-					Pass: pass,
-					Fail: fail,
+					Pass:    pass,
+					Fail:    fail,
 				}
 
 				targets[tName] = t
@@ -242,8 +242,8 @@ func newInitCommand() *cli.Command {
 				out = filepath.Join(cwd, out)
 			}
 
-			if readYesNo(in, "Write Baconfile to " + out + "?", true) {
-				err := ioutil.WriteFile(out, bytes, 0644)
+			if readYesNo(in, "Write Baconfile to "+out+"?", true) {
+				err := os.WriteFile(out, bytes, 0644)
 				if err != nil {
 					return err
 				}
@@ -282,12 +282,12 @@ func loadBaconfile(path string, required bool) (*baconfile.B, error) {
 	}
 	if !exists {
 		if required {
-			return nil, fmt.Errorf("Baconfile not found: %s", path)
+			return nil, fmt.Errorf("baconfile not found: %s", path)
 		}
 		return nil, nil
 	}
 
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +325,7 @@ func findBaconfile(c *cli.Context) (*baconfile.B, error) {
 		}
 	}
 
-	return nil, errors.New("Baconfile not found")
+	return nil, errors.New("baconfile not found")
 }
 
 func newBaconForBaconfile(
@@ -340,7 +340,18 @@ func newBaconForBaconfile(
 
 	target := bc.Targets[targetName]
 	if target == nil {
-		return nil, fmt.Errorf("Baconfile target not found: %s", targetName)
+		// If the default target isn't found, just use the first one available
+		if targetName == "default" {
+			for tn, t := range bc.Targets {
+				targetName = tn
+				target = t
+				break
+			}
+		}
+
+		if target == nil {
+			return nil, fmt.Errorf("baconfile target not found: %s", targetName)
+		}
 	}
 
 	includes := injectArgs(target.Watch, args)
@@ -359,6 +370,7 @@ func newBaconForBaconfile(
 	failCommands := injectArgs(target.Fail, args)
 
 	e := executor.New(
+		targetName,
 		commands,
 		passCommands,
 		failCommands,
@@ -366,9 +378,6 @@ func newBaconForBaconfile(
 		target.Dir,
 		showOut,
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	noNotify := c.GlobalBool(noNotify)
 
@@ -385,7 +394,7 @@ func injectArgs(list []string, args []string) []string {
 	result := list[:]
 	for argIndex, arg := range args {
 		for i, li := range result {
-			result[i] = injectArg(li, argIndex + 1, arg)
+			result[i] = injectArg(li, argIndex+1, arg)
 		}
 	}
 	return result
@@ -398,8 +407,8 @@ func injectArg(str string, index int, value string) string {
 
 func newRunCommand() *cli.Command {
 	return &cli.Command{
-		Name: "run",
-		Usage: "Load configuration from a Baconfile target. The default target name is \"default\".",
+		Name:      "run",
+		Usage:     "Load configuration from a Baconfile target. The default target name is \"default\".",
 		ArgsUsage: "[target] [target arguments]",
 		Action: func(c *cli.Context) error {
 			bf, err := findBaconfile(c)
@@ -428,7 +437,7 @@ func newRunCommand() *cli.Command {
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name: baconFileLong,
+				Name:  baconFileLong,
 				Usage: "The `PATH` to the Baconfile to load (default: Baconfile, Baconfile.yml, Baconfile.yaml)",
 			},
 		},
@@ -516,7 +525,7 @@ func main() {
 	app := newCliApp()
 	err := app.Run(os.Args)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }

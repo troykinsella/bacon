@@ -30,7 +30,7 @@ A tool to watch files for changes and continuously react by running commands.
 
 ## Features
 
-* Compatible with tooling for any technology (i.e. go, ruby, node.js, java, etc.); `bacon` simply executes shell commands
+* Compatible with tooling for any technology; `bacon` simply executes shell commands
 * Control files to watch using extended globs
 * Command status summary line
 * Command status system notifications
@@ -50,7 +50,7 @@ wget -q -O - https://raw.githubusercontent.com/troykinsella/bacon/master/install
 
 Or, run these commands to download and install:
 ```bash
-VERSION=0.4.0
+VERSION=1.0.0
 OS=darwin # or linux, or windows
 curl -SL -o /usr/local/bin/bacon https://github.com/troykinsella/bacon/releases/download/v${VERSION}/bacon_${OS}_amd64
 chmod +x /usr/local/bin/bacon
@@ -297,7 +297,7 @@ watch files and run things for you. It allows these fields:
 ```yaml
 ---
 version: "1.0"
-targets:
+target:
   target_name:
     dir: "some/cwd"
     watch: [ "some/files/**" ]

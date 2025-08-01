@@ -101,7 +101,9 @@ func (w *W) unwatchPath(path string) error {
 
 func (w *W) Run(changed ChangedFunc) error {
 	w.changed = changed
-	defer w.fsWatcher.Close()
+	defer func(fsWatcher *fsnotify.Watcher) {
+		_ = fsWatcher.Close()
+	}(w.fsWatcher)
 	go w.changeWatcher()
 
 	dirs, err := w.exp.BaseDirs()
@@ -109,10 +111,13 @@ func (w *W) Run(changed ChangedFunc) error {
 		return err
 	}
 	if len(dirs) == 0 {
-		return errors.New("No paths to watch were matched")
+		return errors.New("no paths to watch were matched")
 	}
 
-	w.watchPaths(dirs)
+	err = w.watchPaths(dirs)
+	if err != nil {
+		return err
+	}
 	w.changed("") // don't wait for a change
 
 	return <-w.done

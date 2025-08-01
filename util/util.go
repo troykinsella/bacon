@@ -1,8 +1,8 @@
 package util
 
 import (
-	"os"
 	"fmt"
+	"os"
 )
 
 func Exists(path string) (bool, error) {
@@ -21,7 +21,9 @@ func IsDir(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer f.Close()
+	defer func(f *os.File) {
+		_ = f.Close()
+	}(f)
 	s, err := f.Stat()
 	if err != nil {
 		return false, err

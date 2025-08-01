@@ -123,7 +123,7 @@ func TestE_Selected(t *testing.T) {
 		{"foo", []string{"foo"}, []string{}, true, ""},
 		{"foo/", []string{"foo"}, []string{}, true, ""},
 		{"/foo", []string{"/foo"}, []string{}, true, ""},
-		{"/foo/", []string{"/foo"}, []string{}, true, ""},
+		{"/foo/", []string{"/foo"}, []string{}, false, ""},
 		{"foo/bar", []string{"foo"}, []string{""}, false, ""},
 
 		{"foo1", []string{"foo*"}, []string{}, true, ""},

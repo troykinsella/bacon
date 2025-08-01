@@ -15,6 +15,7 @@ const (
 )
 
 type E struct {
+	target       string
 	commands     []string
 	passCommands []string
 	failCommands []string
@@ -32,6 +33,7 @@ type E struct {
 }
 
 type Result struct {
+	Target     string
 	Passing    bool
 	WasPassing bool
 	First      bool
@@ -40,6 +42,7 @@ type Result struct {
 }
 
 func New(
+	target string,
 	commands []string,
 	passCommands []string,
 	failCommands []string,
@@ -52,6 +55,7 @@ func New(
 	}
 
 	return &E{
+		target:       target,
 		commands:     commands,
 		passCommands: passCommands,
 		failCommands: failCommands,
@@ -89,7 +93,10 @@ func (e *E) RunCommands(
 		passFailCommands = e.failCommands
 	}
 	for _, cmd := range passFailCommands {
-		e.runCommand(changed, cmd, args)
+		err := e.runCommand(changed, cmd, args)
+		if err != nil {
+			_, _ = os.Stderr.Write([]byte(err.Error()))
+		}
 	}
 
 	end := time.Now()
@@ -104,6 +111,7 @@ func (e *E) RunCommands(
 	e.passing = pass
 
 	return &Result{
+		Target:     e.target,
 		Passing:    pass,
 		WasPassing: wasPassing,
 		First:      first,
@@ -117,7 +125,7 @@ func (e *E) makeCommand(changed string, cmdStr string, args []string) *exec.Cmd 
 
 	cmd.Env = os.Environ()
 	if changed != "" {
-		cmd.Env = append(cmd.Env, "BACON_CHANGED=" + changed)
+		cmd.Env = append(cmd.Env, "BACON_CHANGED="+changed)
 	}
 
 	if e.dir != "" {
@@ -147,9 +155,9 @@ func (e *E) runCommand(
 
 	err := cmd.Run()
 	if !e.showOutput && err != nil {
-		fmt.Fprintf(e.err, "%s", &outBuf)
+		_, _ = fmt.Fprintf(e.err, "%s", &outBuf)
 	}
-	fmt.Fprintf(e.err, "%s", &errBuf)
+	_, _ = fmt.Fprintf(e.err, "%s", &errBuf)
 
 	return err
 }

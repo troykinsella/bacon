@@ -75,7 +75,7 @@ func baseDir(inc string, excludes []string, resultSet map[string]bool) error {
 }
 
 func (e *E) List() ([]string, error) {
-	result := []string{}
+	var result []string
 
 	baseDirs, err := e.BaseDirs()
 	if err != nil {
@@ -89,7 +89,7 @@ func (e *E) List() ([]string, error) {
 		}
 
 		fis, err := dir.Readdir(0)
-		dir.Close()
+		_ = dir.Close()
 		if err != nil {
 			return nil, err
 		}

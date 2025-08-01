@@ -7,13 +7,13 @@ import (
 	"github.com/troykinsella/bacon/util"
 	"github.com/troykinsella/bacon/watcher"
 	"os"
+	"strconv"
 	"text/template"
 	"time"
-	"strconv"
 )
 
 const (
-	outputStatusFormat = "[{{ .timeStamp }}] {{ .colorStart }}{{ .statusSymbol }} {{ .status }}{{ .colorEnd }}"
+	outputStatusFormat   = "[{{ .timeStamp }}] {{ .colorStart }}{{ .statusSymbol }} {{ .status }}{{ .colorEnd }}"
 	noOutputStatusFormat = "[{{ .timeSince }}] {{ .colorStart }}{{ .statusSymbol }} {{ .status }}{{ .colorEnd }}"
 
 	statusRunning   = "Running"
@@ -27,8 +27,8 @@ const (
 )
 
 type Bacon struct {
-	w          *watcher.W
-	e          *executor.E
+	w *watcher.W
+	e *executor.E
 
 	showOutput bool
 	notify     bool
@@ -37,7 +37,7 @@ type Bacon struct {
 }
 
 type status struct {
-	t time.Time
+	t       time.Time
 	running bool
 	passing bool
 }
@@ -72,11 +72,11 @@ func (b *Bacon) statusPrinter() {
 
 	for {
 		select {
-		case s := <- b.statusChan:
+		case s := <-b.statusChan:
 			lastStatus = s
 			b.printStatus(s, false)
 
-		case <- time.After(time.Second):
+		case <-time.After(time.Second):
 			if !b.showOutput {
 				b.printStatus(lastStatus, true)
 			}
@@ -93,14 +93,14 @@ func newNotificator() *notificator.Notificator {
 func (b *Bacon) Run() error {
 	return b.w.Run(func(f string) {
 		b.statusChan <- &status{
-			t: time.Now(),
+			t:       time.Now(),
 			running: true,
 		}
 
 		r := b.e.RunCommands(f, nil)
 
 		b.statusChan <- &status{
-			t: r.FinishedAt,
+			t:       r.FinishedAt,
 			passing: r.Passing,
 		}
 
@@ -136,7 +136,7 @@ func (b *Bacon) printStatus(s *status, repaint bool) {
 		fmt.Print("\033[1A                                \033[32D")
 	}
 
-	tpl.Execute(os.Stdout, vars)
+	_ = tpl.Execute(os.Stdout, vars)
 }
 
 func (b *Bacon) statusVars(s *status) map[string]string {
@@ -205,7 +205,13 @@ func (b *Bacon) pushNotification(r *executor.Result) {
 
 	msg := b.notifyMessage(r)
 	if msg != "" {
-		b.n.Push(AppName, msg, "noop", notificator.UR_NORMAL)
+		var title string
+		if r.Target == "" {
+			title = AppName
+		} else {
+			title = fmt.Sprintf("%s: %s", AppName, r.Target)
+		}
+		_ = b.n.Push(title, msg, "", notificator.UR_NORMAL)
 	}
 }
 
