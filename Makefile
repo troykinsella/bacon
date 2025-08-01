@@ -1,31 +1,29 @@
-
-PACKAGE=github.com/troykinsella/bacon
 BINARY=bacon
 VERSION=1.0.0
 
 LDFLAGS=-ldflags "-X main.AppVersion=${VERSION}"
 
-build:
-	go build ${LDFLAGS} ${PACKAGE}
+setup:
+	go install github.com/mitchellh/gox@latest
 
-install:
-	go install ${LDFLAGS}
+build:
+	go mod vendor
+	go build ${LDFLAGS} .
 
 test:
-	go test ${PACKAGE}/...
-
-coverage:
-	go test -cover ${PACKAGE}/...
+	go test -cover ./...
 
 dist:
 	gox ${LDFLAGS} \
 		-arch="amd64" \
 		-os="darwin linux windows" \
 		-output="${BINARY}_{{.OS}}_{{.Arch}}" \
-		${PACKAGE}
+		.
+	sha256sum bacon_* > sha256sum.txt
 
 clean:
-	test -f ${BINARY} && rm ${BINARY} || true
+	rm ${BINARY} || true
 	rm ${BINARY}_* || true
+	rm sha256sum.txt || true
 
 .PHONY: build install test coverage dist release clean

@@ -1,4 +1,5 @@
 .idea
 /bacon
 /bacon_*
+/sha256sum.txt
 /vendor

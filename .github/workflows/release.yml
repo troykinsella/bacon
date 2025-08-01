@@ -1,0 +1,35 @@
+name: Release
+on:
+  push:
+    tags:
+    - "v*"
+
+jobs:
+  release:
+    name: Publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.4
+
+      - name: Install dependencies
+        run: make setup
+
+      - name: Run tests
+        run: make test
+
+      - name: Build distribution
+        run: make dist
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            bacon_darwin_amd64
+            bacon_linux_amd64
+            bacon_windows_amd64.exe
+            sha256sum.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
